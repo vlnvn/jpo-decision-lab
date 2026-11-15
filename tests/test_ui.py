@@ -5,7 +5,7 @@ from playwright.async_api import async_playwright
 P=Path(__file__).resolve().parent.parent
 async def main():
  async with async_playwright() as p:
-  browser=await p.chromium.launch(headless=True,executable_path=os.environ.get('CHROMIUM_PATH','/usr/bin/chromium'),args=['--no-sandbox'])
+  browser=await p.chromium.launch(headless=True,executable_path=os.environ.get('CHROMIUM_PATH') or None,args=['--no-sandbox'])
   page=await browser.new_page(viewport={'width':1400,'height':920})
   errors=[];alerts=[]
   page.on('pageerror',lambda err:errors.append(str(err)))
