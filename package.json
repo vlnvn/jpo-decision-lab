@@ -1,0 +1,13 @@
+{
+  "name": "jpo-decision-lab",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Research prototype for prioritizing pedestrian overpass feasibility studies in Jatinangor",
+  "scripts": {
+    "test": "node test_engine.js",
+    "build": "python build_offline.py"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
