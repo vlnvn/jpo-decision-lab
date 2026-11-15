@@ -6,7 +6,7 @@ P=Path(__file__).resolve().parent.parent
 HTML=(P/'JPO_DSS_OFFLINE.html').read_text(encoding='utf-8')
 async def main():
  async with async_playwright() as pw:
-  browser=await pw.chromium.launch(headless=True, executable_path=os.environ.get('CHROMIUM_PATH','/usr/bin/chromium'),args=['--no-sandbox'])
+  browser=await pw.chromium.launch(headless=True, executable_path=os.environ.get('CHROMIUM_PATH') or None,args=['--no-sandbox'])
   errors=[]
   for width in [320,390,768,1440,1920,2560]:
    page=await browser.new_page(viewport={'width':width,'height':900},accept_downloads=True)
