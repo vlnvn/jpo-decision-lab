@@ -126,12 +126,14 @@ def test_count_domain_and_period_warning(client):
 def test_admin_geography_is_reproducible_and_not_a_candidate_site(client):
     r=client.get('/api/geography/jatinangor')
     assert r.status_code==200
+    assert r.headers.get('cache-control') == 'no-store'
     body=r.json()
     feature=body['features'][0]
     assert feature['properties']['code']=='32.11.15'
     assert feature['geometry']['type']=='Polygon'
     ring=feature['geometry']['coordinates'][0]
-    assert len(ring)>=4 and ring[0]==ring[-1]
+    assert len(ring) >= 300 and ring[0] == ring[-1]
+    assert len(body['reference_areas']) == 4
     assert body['metadata']['boundary_kind']=='generalized visual administrative boundary'
     assert 'not legal' in body['metadata']['fitness']
     assert not any(c['coordinate_verified'] for c in client.get('/api/workspace').json()['candidates'])

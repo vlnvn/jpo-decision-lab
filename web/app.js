@@ -36,7 +36,7 @@
     async function request(path, method = 'GET', payload) {
         let res;
         try {
-            res = await fetch('/api' + path, { method, headers: payload ? { 'Content-Type': 'application/json' } : undefined, body: payload ? JSON.stringify(payload) : undefined });
+            res = await fetch('/api' + path, { method, cache: method === 'GET' ? 'no-store' : undefined, headers: payload ? { 'Content-Type': 'application/json' } : undefined, body: payload ? JSON.stringify(payload) : undefined });
         }
         catch (err) {
             throw new Error('API tidak dapat dihubungi. Jalankan server lokal sebelum membuka aplikasi.');

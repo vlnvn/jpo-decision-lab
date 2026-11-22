@@ -137,7 +137,7 @@ def jatinangor_boundary():
     source = STATIC / 'data' / 'jatinangor.geojson'
     feature_collection = json.loads(source.read_text(encoding='utf-8'))
     feature_collection["reference_areas"] = REFERENCE_AREAS
-    return JSONResponse(feature_collection,headers={'Cache-Control':'public, max-age=3600'})
+    return JSONResponse(feature_collection,headers={'Cache-Control':'no-store'})
 
 @app.get('/api/workspace')
 def workspace():
