@@ -341,3 +341,86 @@ h2 { font-weight:690; }
 .map-legend { top:159px; }
 .map-stage .leaflet-control-container { z-index:480; }
 @media(max-width:540px){.map-legend { top:118px; }}
+
+/* Cartography audit: source-bound geometry, landmark anchors and inspected sites.
+   Reference anchors are not surveyed crossing locations. */
+.candidate-list .location-code {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  line-height: 1;
+  font-size: 12px;
+  letter-spacing: -.015em;
+  font-variant-numeric: tabular-nums;
+}
+.candidate-list .candidate-select { min-height: 81px; }
+.candidate-list .location-details { display: flex; flex-direction: column; justify-content: center; }
+.candidate-list .location-name { line-height: 1.35; }
+.candidate-list .location-meta { line-height: 1.45; }
+.reference-marker-wrap { border: 0; background: none; }
+.reference-marker {
+  display: grid; place-items: center; box-sizing: border-box;
+  width: 36px; height: 36px; margin: 3px;
+  border-radius: 50%; border: 3px solid #fff;
+  background: #284eaa; color: #fff; font: 700 12px/1 var(--mono);
+  box-shadow: 0 3px 0 #24324a32, 0 7px 22px #12213d55;
+  transition: transform .16s ease, background .16s ease;
+}
+.reference-marker.selected, .reference-marker:hover { background: #172e5f; transform: scale(1.16); }
+.reference-marker.selected { outline: 3px solid #ecba5e; outline-offset: 2px; }
+.landmark-popup { max-width: 280px; color: #22354f; font-family: 'Segoe UI',Arial,sans-serif; }
+.landmark-popup strong { display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+.landmark-popup p { margin: 0 0 10px; color: #64748b; font-size: 12px; line-height: 1.5; }
+.landmark-popup a { color: #2757b0; font-size: 12px; font-weight: 680; }
+.legend-point { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #284eaa; border: 2px solid #fff; box-shadow: 0 0 0 1px #284eaa; }
+.map-legend { flex-wrap: wrap; max-width: min(470px,calc(100% - 440px)); }
+.district-illustration { display:block; width:100%; height:100%; }
+.district-fallback-name { fill: #6e7f96; font: 700 17px/1 'Segoe UI',Arial,sans-serif; letter-spacing: .18em; }
+.district-fallback-subtitle { fill: #90a0b6; font: 600 10px/1 'Segoe UI',Arial,sans-serif; letter-spacing:.075em; }
+.reference-fallback .fallback-halo { fill: #ffffff; fill-opacity:.8; }
+.reference-fallback .fallback-dot { fill: #315bbc; stroke: #fff; stroke-width: 2; }
+.reference-fallback.active .fallback-dot { fill:#172f63; stroke:#f4c36d; stroke-width:3; }
+.reference-fallback .fallback-number { fill:#fff; font:700 11px/1 'Cascadia Code',Consolas,monospace; }
+.reference-fallback .fallback-label { fill:#2c405b; font:650 11px/1 'Segoe UI',Arial,sans-serif; paint-order:stroke; stroke:#f4f7fb; stroke-width:4px; }
+.map-footnote { display:flex; justify-content:space-between; align-items:center; gap:20px; line-height:1.5; }
+.map-footnote span { min-width:0; }
+.study-strip { border-radius: 9px; }
+.strip-cell strong { letter-spacing:-.025em; }
+.studio-map { border-radius: 10px; }
+.map-floating-caption { border-radius: 9px; }
+@media (max-width: 1020px) {
+  .map-legend { max-width: min(490px,calc(100% - 38px)); }
+  .map-footnote { flex-wrap:wrap; }
+}
+@media (max-width: 600px) {
+  .map-legend { top: 120px; }
+  .reference-fallback .fallback-label { font-size:9px; stroke-width:3px; }
+  .map-footnote { font-size:9px; }
+}
+/* Screen-space tethering separates nearby landmarks (Unpad/Ciseke) without
+   shifting the recorded coordinates. The tiny origin dot is the location. */
+.reference-marker-wrap { width:104px!important; height:104px!important; }
+.reference-origin { position:absolute; width:9px; height:9px; left:47.5px; top:47.5px; background:#30588c; border:2px solid #fff; border-radius:50%; z-index:1; }
+.reference-tether { position:absolute; inset:0; width:104px; height:104px; overflow:visible; pointer-events:none; }
+.reference-tether line { stroke:#607797; stroke-width:1.5; }
+.reference-marker-wrap .reference-marker { position:absolute; margin:0; z-index:3; }
+.map-legend { top:184px; }
+.map-floating-caption { width:242px; }
+@media(max-width:600px){.map-legend{top:173px;max-width:220px;gap:7px;}.map-legend span{font-size:9px}}
+/* Readability and map hierarchy: numeric labels are aligned on the true center. */
+.candidate-head p,.candidate-list .location-meta,.candidate-bottom p { font-size:12px; }
+.candidate-list .location-name { font-size:13px; }
+.candidate-list .register-row { min-height:86px; }
+.inspector-kicker,.candidate-progress-head { font-size:11px; }
+.map-title p,.map-footnote { font-size:11px; }
+.map-controls button { font-size:12px; }
+@media(max-width:600px){
+  .map-stage { height:510px; min-height:510px; }
+  .map-floating-caption { left:12px; top:12px; width:185px; padding:11px 13px; }
+  .map-floating-caption strong { font-size:17px; }
+  .map-floating-caption .map-caption-note { font-size:10px; padding-top:7px; }
+  .map-legend { top:auto; bottom:57px; left:12px; padding:7px 10px; width:auto; max-width:calc(100% - 24px); }
+  .reference-fallback .fallback-label { display:none; }
+  .district-fallback-name { font-size:13px; }
+  .district-fallback-subtitle { font-size:8px; }
+}

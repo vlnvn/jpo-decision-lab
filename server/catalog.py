@@ -29,6 +29,29 @@ CRITERIA = [
  ("C5.2",4,"Kebutuhan lahan tambahan","Cost","m²","Luas tanah tambahan yang mungkin perlu penanganan"),
  ("C5.3",4,"Estimasi biaya pemeliharaan","Cost","Rp/tahun","Perkiraan pemeliharaan tahunan"),
 ]
+
+
+# Public landmark reference pins—not validated JPO crossing locations.
+# Source coordinates describe the named landmark or road, NEVER the proposed bridge.
+# Keeping these outside SQLite candidate records prevents accidental promotion to surveyed sites.
+REFERENCE_AREAS = [
+    {"candidate_id":"A1", "label":"Gerbang Unpad", "latitude":-6.9314972, "longitude":107.7762528,
+     "source":"https://commons.wikimedia.org/wiki/File:Gerbang_Universitas_Padjadjaran_Jatinangor_(2024).jpg",
+     "method":"Geotag foto gerbang Unpad 2024", "precision":"Landmark, bukan titik crossing", "verified_crossing":False},
+    {"candidate_id":"A2", "label":"Jalan Ciseke", "latitude":-6.9327467, "longitude":107.7749886,
+     "source":"https://peraturan.bpk.go.id/Download/323294/2.%20Perbup%20336%20Thn%202022%20ttg%20Batas%20Ds%20Hegarmanah%2C%20Kec.%20Jatinangor.pdf",
+     "method":"Koordinat referensi Jalan Ciseke dari dokumen batas desa, tidak membuktikan posisi Simpang Ciseke/Sayang",
+     "precision":"Koridor jalan, bukan titik crossing", "verified_crossing":False},
+    {"candidate_id":"A3", "label":"Gerbang ITB Jatinangor", "latitude":-6.9280900, "longitude":107.7704500,
+     "source":"https://p2k.stekom.ac.id/ensiklopedia/Kampus_ITB_Jatinangor",
+     "method":"Koordinat referensi gerbang ITB Jatinangor dari direktori sekunder; perlu konfirmasi GPS lapangan",
+     "precision":"Landmark perkiraan, bukan titik crossing", "verified_crossing":False},
+    {"candidate_id":"A4", "label":"Gerbang PKD IPDN", "latitude":-6.9330625, "longitude":107.7635625,
+     "source":"https://www.arsitag.com/project/videotron-gerbang-pkd-kampus-ipdn-jatinangor/photo/203405",
+     "method":"Titik pusat plus code 3Q87+QC5 (referensi gerbang PKD), bukan koordinat GKPN ataupun titik crossing",
+     "precision":"Landmark berbasis plus code, bukan titik crossing", "verified_crossing":False},
+]
+
 PAPER_TITLE = "Model Pendukung Keputusan untuk Memprioritaskan Lokasi Jembatan Penyeberangan Orang di Jatinangor"
 PAPER_SOURCE = "Manuskrip kelompok, halaman 5–7, Tabel II dan Bagian IV–V"
 REFERENCES = [

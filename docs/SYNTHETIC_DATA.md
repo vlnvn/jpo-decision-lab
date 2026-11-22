@@ -40,3 +40,15 @@ The generator therefore uses a **research-informed scenario**, not statistical e
 For a mathematical end-to-end example, the generator adds one **synthetic** panel of perfectly consistent pairwise comparisons (ratios from a small integer vector). This is not elicitation from an actual transport specialist. The mode, source, and run type are saved to SQLite and remain visible in the UI/JSON export. A fresh synthetic load replaces prior data, so export before reseeding.
 
 **No user should cite these values as observations, make JPO investment recommendations from them, or claim research validation from their ranking.**
+
+## CSV fixture and reproducibility
+
+The distribution includes [`examples/synthetic_demo_seed_202611.csv`](../examples/synthetic_demo_seed_202611.csv), containing exactly **56 synthetic measurement records** and one header row. Columns: `candidate_id`, `candidate_label`, `criterion_code`, `criterion_label`, `value`, `unit`, `direction`, `origin`, `checked`, `source`, `period`. Each row is marked `synthetic` and names the seed and why the sampled interval was chosen. **No number in the CSV is a measurement in Jatinangor.**
+
+Recreate the fixture from the actual simulation engine:
+
+```bash
+python -m scripts.generate_demo_csv --seed 202611 --output examples/synthetic_demo_seed_202611.csv
+```
+
+When the full-stack server is running, selecting **Unduh CSV pengukuran** exports the *current SQLite dataset*, which is empty until you add measurements or create a scenario. The export uses the same column layout as the committed fixture. Database data, in contrast to this versioned fixture, is never committed to Git.

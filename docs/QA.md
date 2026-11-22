@@ -27,7 +27,7 @@ The evaluation container blocks Chromium HTTP navigation. Hence API endpoints we
 
 ## Update: Kecamatan boundary and guided user journey
 
-- Boundary endpoint checks a closed Polygon and source code `32.11.15`; there are no embedded candidate pins.
+- Boundary endpoint checks a valid closed 391-point Polygon and source code `32.11.15`; it also supplies four separate source-linked public-landmark reference records. There are no verified JPO crossing pins unless entered and approved by a user.
 - Vector fallback and map shade toggle are exercised in Playwright at desktop/mobile widths.
 - `tests/test_journey.py` exercises **real FastAPI/TestClient writes from browser controls** using an in-process bridge: empty state → guided demo → 56 synthetic measurements → ranking → aggregate observation → apply → stale ranking → recompute → audit. No user-facing response is replaced by a fixed canned ranking.
 - Full online Leaflet / MapLibre / external basemap behavior remain dependent on a browser with internet access; the test suite does not claim network validation.
@@ -37,3 +37,10 @@ The evaluation container blocks Chromium HTTP navigation. Hence API endpoints we
 `tests/test_map_stack.py` verifies that the app no longer requests anonymous CARTO tiles, that the primary vector URL uses OpenFreeMap, and that an OSM raster switch is available. A deterministic fake Leaflet adapter tests layer creation, attribution, camera fitting, style switching and the absence of unverified pins; it does **not** reproduce actual external map tiles. A separate manual test on a normal network is still necessary.
 
 The old `web/workspace.css` stylesheet has been retired. Shared elements are in `web/styles.css`; the study-specific map and inspector are in `web/studio.css`. Browser tests check 320, 390, 768, 1280, 1440, 1920 and 2560 px for document overflow.
+
+## Latest critical-review gates
+
+- `tests/test_provenance_csv.py`: detailed boundary topology, four sourced reference points in district, 0/4 verified crossing points, 56 synthetic values matching the committed CSV, and spreadsheet-formula injection escaping on export.
+- `tests/test_map_references.py`: four numbered fallback markers, selection state, pixel-centered candidate badges, four actual Leaflet marker definitions, and explicit separation from verified crossings.
+- `scripts/build_jatinangor_boundary.py`: reproducible decoding of the display geometry; this is a cartographic transform, not a live geodata validation.
+- Online map tiles and real crossing coordinates remain unverified independently; do not claim otherwise.

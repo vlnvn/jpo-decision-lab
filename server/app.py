@@ -1,6 +1,8 @@
 """HTTP interface of the JPO research workbench. Local single-workspace prototype."""
 from __future__ import annotations
 import hashlib
+import csv
+import io
 import json
 import math
 import os
@@ -8,11 +10,11 @@ from pathlib import Path
 from contextlib import asynccontextmanager
 from typing import Literal
 from fastapi import FastAPI,HTTPException
-from fastapi.responses import FileResponse,JSONResponse
+from fastapi.responses import FileResponse,JSONResponse,Response
 from pydantic import BaseModel,Field,field_validator,model_validator
 from fastapi.staticfiles import StaticFiles
 from . import database as dbs
-from .catalog import GROUPS,REFERENCES,PAPER_TITLE,CRITERIA
+from .catalog import GROUPS,REFERENCES,PAPER_TITLE,CRITERIA,REFERENCE_AREAS
 from .demo import demo_reset,ASSUMPTIONS
 from .mcdm import calculate_weights,topsis,sensitivity,ModelError,LEVELS,GROUP_SIZES,pairs
 
@@ -134,6 +136,7 @@ def jatinangor_boundary():
     """
     source = STATIC / 'data' / 'jatinangor.geojson'
     feature_collection = json.loads(source.read_text(encoding='utf-8'))
+    feature_collection["reference_areas"] = REFERENCE_AREAS
     return JSONResponse(feature_collection,headers={'Cache-Control':'public, max-age=3600'})
 
 @app.get('/api/workspace')
@@ -288,6 +291,36 @@ def apply_observation(observation_id:int):
         db.execute('UPDATE observations SET applied=1 WHERE id=?',(observation_id,))
         dbs.audit(db,'observation_applied',{'id':observation_id,'codes':[x[0] for x in updates]})
         return payload(db)
+
+def csv_measurements(rows, candidates, criteria):
+    """CSV export of the current SQLite workspace, with each row's actual provenance."""
+    names={c['id']:c['label'] for c in candidates}
+    info={c['code']:c for c in criteria}
+    out=io.StringIO(newline='')
+    writer=csv.writer(out,lineterminator='\n')
+    # When users open exported CSV in Excel/Sheets, do not evaluate source text
+    # as an injected formula. The numerical value column remains numerical.
+    def safe_spreadsheet_text(value):
+        value = str(value)
+        return "'" + value if value.lstrip().startswith(('=', '+', '-', '@')) else value
+    writer.writerow(['candidate_id','candidate_label','criterion_code','criterion_label',
+                    'value','unit','direction','origin','checked','source','period'])
+    for row in rows:
+        detail=info[row['code']]
+        writer.writerow([row['candidate_id'],safe_spreadsheet_text(names[row['candidate_id']]),row['code'],safe_spreadsheet_text(detail['label']),
+                         row['value'],detail['unit'],detail['direction'],row['origin'],
+                         int(row['checked']),safe_spreadsheet_text(row['source']),safe_spreadsheet_text(row['period'])])
+    return out.getvalue()
+
+@app.get('/api/export/measurements.csv')
+def export_measurement_csv():
+    with dbs.connect() as db:
+        snapshot=payload(db,compact=True)
+        content=csv_measurements(snapshot['measurements'],snapshot['candidates'],snapshot['criteria'])
+        prefix='SIMULASI' if snapshot['mode']=='synthetic' else 'PENELITIAN'
+        return Response(content=content,media_type='text/csv; charset=utf-8',headers={
+            'Content-Disposition':f'attachment; filename="jpo_{prefix.lower()}_measurements.csv"',
+            'Cache-Control':'no-store'})
 
 @app.get('/api/export')
 def export():

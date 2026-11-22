@@ -10,7 +10,7 @@ A local research application for comparing **priority for further JPO feasibilit
 - **API:** FastAPI (Python), input validation with Pydantic.
 - **Database:** SQLite, persistent between browser sessions, with WAL journaling.
 - **Decision engine:** Python implementation of hierarchical Fuzzy AHP (Buckley geometric mean), conventional AHP comparison, TOPSIS, and ±10% weight sensitivity.
-- **Map:** Leaflet 1.9.4 + MapLibre GL Leaflet. The default street basemap is OpenFreeMap Positron vector tiles (no API key); the Jalan tab uses OpenStreetMap raster tiles, also as fallback if vector rendering fails. A locally sourced GeoJSON outlines Jatinangor; everything outside is muted. When external map services are unreachable, only the source-derived boundary preview is shown, explicitly without fabricated roads. Pins only appear after coordinate verification with an explicit source. See [geographic provenance](docs/GEO_SOURCE.md).
+- **Map:** Leaflet 1.9.4 + MapLibre GL Leaflet. The default street basemap is OpenFreeMap Positron vector tiles (no API key); the Jalan tab uses OpenStreetMap raster tiles, also as fallback if vector rendering fails. A locally sourced GeoJSON outlines Jatinangor; everything outside is muted. When external map services are unreachable, only the source-derived boundary preview is shown, explicitly without fabricated roads. Four source-attributed **landmark reference markers** appear for orientation; distinct surveyed JPO markers require a user-confirmed coordinate with source. See [geographic provenance](docs/GEO_SOURCE.md).
 - **Tests:** API, mathematical cases, provenance, simulation isolation, and responsive UI (320–2560 px).
 
 The original four candidates and the 14 definitions from Table II are **research configuration**, not observations. A candidate label/coordinate, 56 measurement values, sources, judgments, observations, and result snapshots are loaded from SQLite. Changing an entry makes the most recent run **stale** until it is recalculated.
@@ -61,12 +61,12 @@ If you previously downloaded the old **single HTML file** rather than cloning th
 
 ## Research/demo flow
 
-1. **Ikhtisar lokasi:** four paper candidates are seeded without fabricated coordinates. Confirm their labels and map coordinates with a source before showing pins.
+1. **Ikhtisar lokasi:** four paper candidates are seeded without fabricated JPO coordinates. Four **reference landmark** markers are provided solely for orientation; the verified JPO counter remains 0/4 until actual crossing survey.
 2. **Data penelitian:** edit the 14 measurements per candidate; each requires period, source, and a review checkbox. A missing value is not zero.
 3. **Penilaian pakar:** enter one or more experts' pairwise comparisons at six levels; inconsistent judgments are rejected by the model's implemented CR threshold.
 4. **Pemeringkatan:** run server-side Fuzzy AHP and TOPSIS. Review weights, AHP comparison, and sensitivity.
 5. **Observasi:** manually enter *aggregate counts* after a baseline exists. Apply an observation explicitly, then rerun ranking and compare. No live camera integration is claimed.
-6. **Riwayat & sumber:** download a JSON export of workspace values, run summaries, and provenance. The database persists locally between reloads.
+6. **Riwayat & sumber:** download JSON and CSV exports of the currently stored measurements, run summaries, and provenance. The database persists locally between reloads.
 
 For a realistic, step-by-step evaluation, use [Panduan uji coba](docs/USER_TEST.md) or click **Panduan uji** in the app header. For a live demonstration, use **Mulai simulasi** with a recorded seed (default `202611`), then run TOPSIS. The generator creates a complete **synthetic** example. Every simulated value is tagged as synthetic, including the expert comparisons; they are not results from Jatinangor. A demo replaces the previous workspace, so export genuine work beforehand.
 
@@ -101,3 +101,15 @@ Read [user testing steps](docs/USER_TEST.md), [geographic source and map limitat
 This version is a **single-workspace local application**, served on `127.0.0.1` by default. It has no authentication, role system, multiuser synchronization, video ingestion, or production-grade deployment hardening. **Do not expose it publicly on a server as-is.** See [SECURITY.md](SECURITY.md).
 
 The default no-key vector basemap is [OpenFreeMap](https://openfreemap.org/quick_start/) Positron, rendered with MapLibre inside Leaflet. The second map style and resilience fallback use standard OpenStreetMap raster tiles. Respect their attribution and [OSM tile usage policy](https://operations.osmfoundation.org/policies/tiles/). Third-party tiles and CDN scripts require internet access; the offline boundary is a source-derived geographic outline only, without fake roads. Neither provider is guaranteed available under every network. Public deployment should evaluate provider capacity and restrictions. The generalized boundary is for orientation, **not** legal surveying, and candidate pins are never fabricated.
+
+## Updated cartography and example CSV
+
+The map uses a source-attributed, 391-coordinate visual outline derived from 12 HDX/BPS 2020 village polygons, replacing an overly generalized nine-coordinate boundary. Four **reference landmark markers (A1–A4)** appear so researchers can orient themselves. Their positions are NOT verified JPO crossing locations; the database counter stays **0/4** until crossing points have been surveyed and accepted. See [`docs/GEO_SOURCE.md`](docs/GEO_SOURCE.md).
+
+A reproducible sample dataset is committed at [`examples/synthetic_demo_seed_202611.csv`](examples/synthetic_demo_seed_202611.csv). To generate exactly the same 56 rows with the current backend:
+
+```bash
+python -m scripts.generate_demo_csv --seed 202611 --output examples/synthetic_demo_seed_202611.csv
+```
+
+The application also has **Unduh CSV pengukuran**, which exports current SQLite records in the same format with origin and source fields. See [`docs/SYNTHETIC_DATA.md`](docs/SYNTHETIC_DATA.md) and [`docs/MAP_REVIEW.md`](docs/MAP_REVIEW.md) for critical review gates.

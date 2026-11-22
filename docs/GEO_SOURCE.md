@@ -1,30 +1,32 @@
-# Cakupan geografis Jatinangor
+# Peta Jatinangor: provenance and interpretation
 
-## Apa yang diperlihatkan
+## Why the old outline was replaced
 
-Endpoint `/api/geography/jatinangor` mengembalikan satu poligon GeoJSON yang menggambarkan **Kecamatan Jatinangor, Kabupaten Sumedang, Jawa Barat**. Kode referensi wilayah yang digunakan dataset adalah `32.11.15` (Jatinangor). Geometri bersifat **simplified / generalized** untuk visualisasi, bukan batas administratif yang disahkan untuk keperluan hukum, pertanahan, atau penentuan tapak konstruksi.
+The previous regional layer was a nine-coordinate generalized polygon from `cahyadsn` via `aaronsanger/idn-geojson`. Its long straight edges distorted the visible district outline and made the map look like a sketch. It is not used in the revised map.
 
-## Asal geometri dan lisensi
+The current reference was derived from the **12 village geometries** in `JfrAziz/indonesia-district`, `id32_jawa_barat/id3211_sumedang/id3211010_jatinangor.geojson`. The underlying dataset is HDX Indonesia Subnational Administrative Boundaries / BPS 2020; the features retain metadata `date=2019-12-20`, `valid_on=2020-04-01`, `source=HDX-BPS-2020`. The repository's [README](https://github.com/JfrAziz/indonesia-district/blob/master/readme.md) points to [HDX](https://data.humdata.org/dataset/cod-ab-idn) and identifies **CC BY-IGO** attribution terms. The present repository does **not** claim those coordinates are current authoritative construction or cadastral boundaries.
 
-- Geometri dipilih berdasarkan atribut `code=32.11.15`, `name=KEC. JATINANGOR`, `parent_name=KAB. SUMEDANG` pada `districts/32_11.geojson` dalam repositori [aaronsanger/idn-geojson](https://github.com/aaronsanger/idn-geojson). Ekspor sumber menyatakan tanggal 8 September 2026 dan atribut sumber `cahyadsn` untuk fitur tersebut.
-- Penyedia hulu yang dikreditkan fitur adalah [cahyadsn/wilayah_boundaries](https://github.com/cahyadsn/wilayah_boundaries), yang menerbitkan repo di bawah [lisensi MIT](https://github.com/cahyadsn/wilayah_boundaries/blob/main/LICENSE). Lisensi dan kredit sumber tetap dicantumkan; salinan geometri hanyalah fitur kecamatan yang diperlukan.
-- Snapshot hasil ekstraksi disimpan sebagai `web/data/jatinangor.geojson`, sehingga pengalaman dasar tidak bergantung pada API geometri pihak ketiga. Bagian dalam poligon transparan pada basemap; bagian luar memakai mask abu-abu. Tidak ada koordinat kandidat JPO di dalam berkas ini.
-- Sumber turunan menyatakan keterbatasan resolusi dan belum melakukan validasi independen terhadap semua poligon. Poligon ini hanya memiliki sembilan pasangan koordinat termasuk penutup ring. Saat tersedia data resmi skala lebih baik dari Badan Informasi Geospasial/pemerintah daerah dengan hak pakai yang sesuai, ganti berkas, tambahkan versi sumber, dan uji topologi dan kesesuaian titik baru.
+The reconstruction uses the exact 6-decimal-degree undirected shared edges of the 12 village MultiPolygons. Edges occurring twice are internal village boundaries. The 1,057 exterior edges form one closed loop with degree-two endpoints. The exterior outline is cartographically simplified with an angular tolerance of 0.00007°, then encoded at 1e-5-degree precision. The resulting GeoJSON is a **valid 391-coordinate ring**, with approximately 25.98 km² area when evaluated by WGS84 geodesic area. That figure is a property of the rendered reference geometry, **not an official administrative area statistic**.
 
-## Etika visualisasi
+The high-resolution source features are retained by attribution and retrievable from the provider; the versioned display-only output lives in `web/data/jatinangor.geojson`. The build/verification logic is `scripts/build_jatinangor_boundary.py`. Map fallback uses that same GeoJSON without inventing roads.
 
-Tampilan tidak boleh menyiratkan bahwa suatu gerbang kampus, jalan, atau titik kandidat sudah diukur. Marker hanya muncul apabila koordinat yang bersumber telah dikonfirmasi. Klik peta untuk memilih titik memberi **draf**, bukan verifikasi otomatis. Mask area hanya memperjelas cakupan penelitian, bukan mengunci kelayakan konstruksi atau aksesibilitas sesungguhnya.
+## Two different types of points
 
-Basemap online utama sekarang menggunakan **OpenFreeMap Positron** melalui MapLibre GL di dalam Leaflet. OpenFreeMap menyatakan gaya vector tersedia tanpa API key dan menyediakan style `https://tiles.openfreemap.org/styles/positron`; atribusi tetap wajib. Tombol **Jalan** menggunakan raster standar `https://tile.openstreetmap.org/{z}/{x}/{y}.png` dan juga menjadi fallback jika vector tile/WebGL tidak tersedia. Sumbernya adalah OpenStreetMap dan harus mematuhi [Tile Usage Policy](https://operations.osmfoundation.org/policies/tiles/). Tidak ada lagi pemanggilan CARTO anonim yang sebelumnya menghasilkan watermark *API KEY REQUIRED* mulai 2026.
+**Reference landmark anchors** (four numbers visible on the map) are *contextual reference markers*, not surveyed JPO sites. They originate from public information and are returned in `reference_areas` by `/api/geography/jatinangor`. Provenance, limitations and source URLs are returned per record. The markers must **not** update the database column `coordinate_verified` or its 0/4 summary.
 
-Saat service eksternal atau script CDN tidak tersedia, aplikasi secara eksplisit menampilkan status kegagalan dan SVG batas kecamatan dari GeoJSON yang sama; **tidak menggambar jaringan jalan atau marker fiktif**. Pemuatan tile OpenFreeMap dan OSM nyata belum dapat divalidasi dari runner lokal yang memblokir akses HTTP luar, maka diperlukan pemeriksaan manual di perangkat yang terhubung internet. Kondisi ini tidak mempengaruhi perhitungan DSS melalui FastAPI dan SQLite.
+| Label | Landmark representation | Reference source | Scientific limitation |
+| --- | --- | --- | --- |
+| A1 | Gerbang Universitas Padjadjaran | [Geotagged Unpad gate image, 2024](https://commons.wikimedia.org/wiki/File:Gerbang_Universitas_Padjadjaran_Jatinangor_(2024).jpg) | Landmark, not Unpad/BNI crossing survey |
+| A2 | Point on Jalan Ciseke | [Sumedang regulation annex](https://peraturan.bpk.go.id/Download/323294/2.%20Perbup%20336%20Thn%202022%20ttg%20Batas%20Ds%20Hegarmanah%2C%20Kec.%20Jatinangor.pdf) | A point along the corridor, not a verified Ciseke/Sayang crossing |
+| A3 | Reference to ITB Jatinangor gate | [Secondary campus listing](https://p2k.stekom.ac.id/ensiklopedia/Kampus_ITB_Jatinangor) and [official ITB location](https://ditsp.itb.ac.id/bangunan/kampus-jatinangor/) | Exact candidate crossing still needs field survey |
+| A4 | Gerbang PKD, IPDN area, from `3Q87+QC5` plus code | [Geotagged project](https://www.arsitag.com/project/videotron-gerbang-pkd-kampus-ipdn-jatinangor/photo/203405) | The paper disagrees on whether candidate A4 is GKPN/IPDN or Pertigaan Hegarmanah/IPDN; neither bridge point nor name has been confirmed |
 
-## Implementasi
+The precise stored decimal positions are *referential anchor coordinates only*. Public geotags and map-directory data can be inaccurate. These should **not** be used for construction siting, road design, impact conclusions, or administrative evidence. In screenshots, a marker's numbered label may be displaced a few screen pixels via a tether for clarity, while its tiny source-origin dot remains at the actual reference coordinate.
 
-- `server/app.py`: endpoint GeoJSON dan pengaturan cache HTTP.
-- `web/app.js`: pengambilan geometri, pratinjau vektor, mask berongga Leaflet, fitting batas, dan batasan validasi pin.
-- `web/studio.css`: hierarki peta, panel inspeksi kandidat, pemilihan basemap, legenda, serta layout responsif. `web/styles.css` memuat kontrol dasar bersama.
-- `tests/test_api.py`: kode wilayah, tipe geometri, penutupan poligon, serta pemisahan geometri dari pin kandidat.
-- `tests/test_ui.py`, `tests/test_map_stack.py`: geometri dan posisi panel pada berbagai resolusi, mask, pemilihan basemap, atribusi dan larangan pin tanpa verifikasi. Tile online tidak diuji oleh fixture.
+**Verified crossing points** are stored separately in SQLite `candidates.latitude`, `candidates.longitude`, `coordinate_source`, and `coordinate_verified`. A user can only flag a crossing verified when its source is supplied. The software does not claim the coordinate belongs to a real JPO without survey and review. In the absence of any field-verified JPO, `coordinates_verified` stays **0/4**, even while four reference landmarks appear on the map.
 
-Peta visual yang tampak baik adalah **hasil desain antarmuka**, bukan validasi akurasi geospasial atau hasil rekayasa lalu lintas.
+## Basemap, masks, and operating limits
+
+Online map: OpenFreeMap Positron / OpenStreetMap via Leaflet and MapLibre. The no-key CARTO basemap causing `API KEY REQUIRED` watermark was removed in a previous release. If external maps are unavailable, the fallback displays the **real reference outline plus four annotated landmarks** without fake roads. The gray exterior mask is a visual context tool, not access control.
+
+The application's test environment cannot validate public map tile availability over the end user's internet. Verify in a real browser with live internet, check mandatory attribution, and confirm that map controls behave as expected. The GeoJSON should be replaced with reviewed current official geospatial information if the project advances beyond a research prototype.
