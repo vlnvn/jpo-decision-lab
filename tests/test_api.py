@@ -137,3 +137,14 @@ def test_admin_geography_is_reproducible_and_not_a_candidate_site(client):
     assert body['metadata']['boundary_kind']=='generalized visual administrative boundary'
     assert 'not legal' in body['metadata']['fitness']
     assert not any(c['coordinate_verified'] for c in client.get('/api/workspace').json()['candidates'])
+
+def test_landmark_reference_is_not_misrepresented_as_crossing_or_itb_gate(client):
+    response = client.get('/api/geography/jatinangor')
+    assert response.status_code == 200
+    refs = response.json()['reference_areas']
+    assert len(refs) == 4
+    assert all(item['verified_crossing'] is False for item in refs)
+    itb = next(item for item in refs if item['candidate_id'] == 'A3')
+    assert 'Gerbang' not in itb['label']
+    assert 'Koordinat umum' in itb['method']
+    assert 'bukan titik gerbang' in itb['precision']
