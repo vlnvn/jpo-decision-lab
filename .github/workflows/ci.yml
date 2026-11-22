@@ -26,4 +26,4 @@ jobs:
       - name: Install Chromium
         run: python -m playwright install --with-deps chromium
       - name: Responsive and interaction tests
-        run: python -m pytest tests/test_ui.py -q
+        run: python -m pytest tests/test_ui.py tests/test_journey.py -q

@@ -125,6 +125,17 @@ def payload(db,compact=False):
 @app.get('/api/health')
 def health():return {'service':'jpo-decision-lab','status':'ok','version':'2.0.0'}
 
+@app.get('/api/geography/jatinangor')
+def jatinangor_boundary():
+    """A *generalized* research map outline, not a legal cadastral boundary.
+
+    This file is a versioned reference layer; candidate measurements,
+    coordinates and expert judgments still come from the database.
+    """
+    source = STATIC / 'data' / 'jatinangor.geojson'
+    feature_collection = json.loads(source.read_text(encoding='utf-8'))
+    return JSONResponse(feature_collection,headers={'Cache-Control':'public, max-age=3600'})
+
 @app.get('/api/workspace')
 def workspace():
     with dbs.connect() as db:return payload(db)

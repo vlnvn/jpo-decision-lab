@@ -11,7 +11,11 @@
     let selectedExpert = null;
     let selectedLevel = 'main';
     let mapInstance = null;
+    let geography = null; // versioned reference geometry from API; not an observed JPO coordinate
     let activePinCandidate = null;
+    let boundaryMask = null;
+    let boundaryLayer = null;
+    let mapMasked = true;
     const levelNames = { main: 'Lima kelompok kriteria', local0: 'Keselamatan', local1: 'Kebutuhan pejalan kaki', local2: 'Aksesibilitas', local3: 'Kelayakan teknis', local4: 'Ekonomi' };
     const levelSizes = { main: 5, local0: 4, local1: 2, local2: 2, local3: 3, local4: 3 };
     const NF = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 });
@@ -74,14 +78,18 @@
     }
     function recentRun() { return state.runs[0] || null; }
     function registerRows() {
-        return state.candidates.map(c => `<div class="register-row"><span class="location-code">${safe(c.id)}</span><div><p class="location-name">${safe(c.label)}</p><p class="location-meta">${c.coordinate_verified ? 'Titik GIS dengan sumber' : 'Koordinat belum terverifikasi'} · ${c.identity_verified ? 'Identitas diperiksa' : 'Identitas belum dikonfirmasi'}</p></div>${button('edit-candidate', 'Detail', 'secondary small', `data-id="${safe(c.id)}"`)}</div>`).join('');
+        return state.candidates.map((c, i) => `<div class="register-row"><span class="location-code">${safe(c.id)}</span><div class="location-details"><p class="location-name">${safe(c.label)}</p><p class="location-meta">${c.coordinate_verified ? 'Koordinat tervalidasi oleh tim' : 'Titik penyeberangan belum ditetapkan'}${c.identity_verified ? ' · Identitas diperiksa' : ''}</p></div><button type="button" class="location-action" aria-label="Lihat detail ${safe(c.label)}" data-action="edit-candidate" data-id="${safe(c.id)}">↗</button></div>`).join('');
+    }
+    function workflow() {
+        const steps = [['measurements', '01', 'Lengkapi data', '4 lokasi × 14 indikator'], ['weights', '02', 'Bobot pakar', 'Perbandingan Fuzzy AHP'], ['ranking', '03', 'Prioritas kajian', 'Hasil TOPSIS'], ['observations', '04', 'Validasi lapangan', 'Agregat observasi'], ['audit', '05', 'Jejak keputusan', 'Data & perhitungan']];
+        return `<div class="workflow-heading"><div><span class="section-overline">ALUR PENGGUNA</span><h2>Dari pengukuran menuju keputusan yang bisa ditelusuri</h2></div><span class="workflow-source">Berdasarkan Bagian IV–V paper kelompok</span></div><div class="workflow-steps">${steps.map(([id, code, title, detail], i) => `<button type="button" class="workflow-step" data-screen="${id}"><span class="step-num">${code}</span><span><b>${title}</b><small>${detail}</small></span><span aria-hidden="true" class="step-arrow">↗</span></button>`).join('')}</div>`;
     }
     function overview() {
-        const actions = button('open-demo', 'Buat skenario uji', 'secondary') + button('clear', 'Kosongkan workspace', 'ghost');
-        return head('01', 'Prioritas kajian lokasi penyeberangan', 'Dari data lokasi dan penilaian multikriteria menuju urutan kandidat yang dapat ditelusuri. Penentuan jenis fasilitas tetap memerlukan kajian rekayasa lalu lintas.', actions) + banner() + metrics() +
-            `<div class="workspace-grid"><section class="panel"><div class="panel-title" style="padding:19px 21px 0"><h2>Peta kandidat</h2><span>Jatinangor, Kabupaten Sumedang</span></div><div class="map-wrap"><div id="map" class="map" aria-label="Peta kandidat yang koordinatnya telah diverifikasi"></div><div class="map-overlay"><b>${state.readiness.coordinates_verified ? `${state.readiness.coordinates_verified} titik sumber terverifikasi` : 'Belum ada pin kandidat'}</b><p>Pin muncul setelah koordinat beserta sumbernya diperiksa. Peta dasar bukan pengukuran lokasi penyeberangan.</p></div></div><div class="panel pad"><span class="note">Peta dasar © OpenStreetMap contributors. Perlu internet untuk memuat tile; tanpa koneksi, nilai penelitian tetap tersedia dari database lokal.</span></div></section>
-      <section class="panel pad register"><div class="panel-title"><h2>Empat lokasi awal</h2><span>Bagian IV.A paper</span></div>${registerRows()}<div class="fineprint">A4 ditulis GKPN/IPDN di Bagian IV.A tetapi Pertigaan Hegarmanah/IPDN pada kesimpulan. Identitas titik harus disepakati sebelum pengumpulan data lapangan.</div></section></div>
-      <div class="section-heading"><h2>Alur penelitian</h2><span>MODEL KONSEPTUAL / BAGIAN IV–V</span></div><div class="notice"><strong>01</strong> Data lapangan dan provenance → <strong>02</strong> Pembobotan Fuzzy AHP → <strong>03</strong> Peringkat TOPSIS → <strong>04</strong> Observasi agregat → <strong>05</strong> Uji perubahan peringkat. Tidak ada rekomendasi pembangunan otomatis.</div>`;
+        const actions = button('open-demo', 'Buat skenario uji', 'primary') + button('clear', 'Reset workspace', 'ghost');
+        return `<div class="overview-head">${head('STUDI KAWASAN', 'Jatinangor, dalam satu peta.', 'Tentukan lokasi yang perlu dikaji lebih dulu dengan data terukur, bobot pakar, dan pemeringkatan yang dapat dijelaskan.', actions)}</div>` + banner() +
+            `<div class="map-layout"><section class="map-surface" aria-labelledby="map-heading"><div class="map-topline"><div><div class="section-overline">WILAYAH STUDI / 32.11.15</div><h2 id="map-heading">Kecamatan Jatinangor</h2></div><div class="map-controls"><span class="map-live-dot" aria-hidden="true"></span><span class="map-source-type">Batas wilayah disederhanakan</span><button type="button" class="map-control" data-action="toggle-mask" id="toggle-mask" aria-pressed="${mapMasked}">Area luar: ${mapMasked ? 'redup' : 'terang'}</button><button type="button" class="map-control solid" data-action="focus-region">Fokus wilayah ↗</button></div></div><div class="map-stage" id="map-stage"><div class="map-underlay" id="map-underlay" aria-hidden="true"></div><div id="map" class="map" aria-label="Peta interaktif Kecamatan Jatinangor; klik lokasi hanya saat mode pemilihan titik diaktifkan"></div><div class="map-floating-caption"><span class="map-caption-label">CAKUPAN STUDI</span><strong>Kecamatan Jatinangor</strong><span>Kabupaten Sumedang · Jawa Barat</span><div class="map-caption-rule"></div><span>Area luar diarsir agar fokus tetap pada wilayah penelitian.</span></div><div class="map-legend"><span><i class="legend-swatch in"></i> Dalam kecamatan</span><span><i class="legend-swatch out"></i> Di luar cakupan</span></div><div class="map-north" aria-hidden="true">N <span>↑</span></div></div><div class="map-footnote"><span><strong>Geometri:</strong> cahyadsn, versi disederhanakan · bukan batas legal atau lokasi survei</span><span>Basemap: © OpenStreetMap · © CARTO (saat tersedia)</span></div></section>
+            <aside class="candidate-surface"><div class="candidate-head"><span class="section-overline">ALTERNATIF PENELITIAN</span><h2>Empat lokasi awal</h2><p>Daftar kandidat dari paper; titik koordinat baru ditampilkan apabila sudah diperiksa.</p></div><div class="candidate-list">${registerRows()}</div><div class="candidate-bottom"><div class="candidate-progress-head"><span>Persiapan koordinat</span><b>${state.readiness.coordinates_verified} dari ${state.candidates.length}</b></div><div class="candidate-progress"><i style="width:${state.candidates.length ? (100 * state.readiness.coordinates_verified / state.candidates.length) : 0}%"></i></div><p>${state.readiness.coordinates_verified ? 'Hanya titik dengan sumber koordinat yang muncul pada peta.' : 'Peta wilayah tetap tersedia tanpa memasang pin yang belum terbukti.'}</p><div class="candidate-warning">Nama kandidat A4 berbeda antara Bagian IV.A dan kesimpulan. Perlu konfirmasi sebelum survei.</div></div></aside></div>
+            <div class="overview-metrics">${metrics()}</div>${workflow()}`;
     }
     function measurements() {
         const cand = cById(selectedCandidate) || state.candidates[0];
@@ -122,8 +130,10 @@
     function ranking() {
         const run = recentRun(), r = run?.result;
         const records = r?.topsis?.ranked || [];
+        const leader = records[0];
+        const leadHtml = leader ? `<div class="ranking-lead"><div><span class="section-overline">PRIORITAS KAJIAN / URUTAN 01</span><h2>${safe(cById(leader.candidate_id)?.label || leader.candidate_id)}</h2><p>Alternatif teratas menurut bobot dan data pada run ini. Peringkat tidak menggantikan penilaian kelayakan JPO.</p></div><div class="ranking-lead-score"><span>Koefisien TOPSIS</span><b>${num(leader.score,4)}</b><small>Skala relatif 0–1</small></div></div>` : '';
         let output = !run ? `<div class="empty-panel"><b>Belum ada hasil perhitungan</b><p>Lengkapi seluruh nilai dan penilaian pakar, lalu jalankan TOPSIS. Sistem tidak membuat nilai hasil otomatis.</p></div>` :
-            `<div class="panel pad" style="margin-bottom:17px"><div class="panel-title"><h2>Urutan prioritas kajian</h2><span class="pill ${run.mode === 'synthetic' ? 'synthetic' : ''}">${safe(run.mode === 'synthetic' ? 'Simulasi' : 'Input pengguna')}</span></div>${run.stale ? '<div class="mode-banner"><b>Hasil tidak mutakhir — nilai atau penilaian telah berubah. Jalankan ulang perhitungan.</b></div>' : ''}${r.data_quality?.period_warnings?.length ? `<div class="mode-banner"><div><b>Peringatan: periode tidak seragam pada ${r.data_quality.period_warnings.length} indikator.</b><span>Hasil masih bersifat eksploratif. Samakan jendela observasi antarlokasi sebelum membuat kesimpulan lapangan.</span></div></div>` : ''}<div class="table-scroll"><table class="rank-table"><thead><tr><th>Rank</th><th>Kandidat</th><th>Skor C*</th><th>Indikator visual</th></tr></thead><tbody>${records.map(rec => `<tr><td class="rank-no">${rec.rank.toString().padStart(2, '0')}</td><td>${safe(cById(rec.candidate_id)?.label || rec.candidate_id)}</td><td class="rank-score">${num(rec.score, 4)}</td><td><div class="score-track"><span style="width:${Math.max(0, Math.min(100, rec.score * 100))}%"></span></div></td></tr>`).join('')}</tbody></table></div><p class="footnote">Koefisien TOPSIS ini adalah prioritas kajian menurut data dan bobot yang diberikan, bukan probabilitas kecelakaan atau rekomendasi konstruksi.</p></div>
+            `${leadHtml}<div class="panel pad" style="margin-bottom:17px"><div class="panel-title"><h2>Urutan prioritas kajian</h2><span class="pill ${run.mode === 'synthetic' ? 'synthetic' : ''}">${safe(run.mode === 'synthetic' ? 'Simulasi' : 'Input pengguna')}</span></div>${run.stale ? '<div class="mode-banner"><b>Hasil tidak mutakhir — nilai atau penilaian telah berubah. Jalankan ulang perhitungan.</b></div>' : ''}${r.data_quality?.period_warnings?.length ? `<div class="mode-banner"><div><b>Peringatan: periode tidak seragam pada ${r.data_quality.period_warnings.length} indikator.</b><span>Hasil masih bersifat eksploratif. Samakan jendela observasi antarlokasi sebelum membuat kesimpulan lapangan.</span></div></div>` : ''}<div class="table-scroll"><table class="rank-table"><thead><tr><th>Rank</th><th>Kandidat</th><th>Skor C*</th><th>Indikator visual</th></tr></thead><tbody>${records.map(rec => `<tr><td class="rank-no">${rec.rank.toString().padStart(2, '0')}</td><td>${safe(cById(rec.candidate_id)?.label || rec.candidate_id)}</td><td class="rank-score">${num(rec.score, 4)}</td><td><div class="score-track"><span style="width:${Math.max(0, Math.min(100, rec.score * 100))}%"></span></div></td></tr>`).join('')}</tbody></table></div><p class="footnote">Koefisien TOPSIS ini adalah prioritas kajian menurut data dan bobot yang diberikan, bukan probabilitas kecelakaan atau rekomendasi konstruksi.</p></div>
      <div class="run-grid"><div class="panel pad"><div class="panel-title"><h2>Bobot global</h2><span>Jumlah = 1</span></div><div class="table-scroll"><table><thead><tr><th>Kode</th><th>Indikator</th><th>Bobot</th></tr></thead><tbody>${state.criteria.map((c, i) => `<tr><td class="metadata">${safe(c.code)}</td><td>${safe(c.label)}</td><td class="num">${num(r.weights.weights[i] * 100, 2)}%</td></tr>`).join('')}</tbody></table></div></div><div class="panel pad"><h2>Ketahanan hasil</h2><p class="subheading">Setiap bobot kelompok dinaikkan atau diturunkan 10%, kemudian seluruh bobot dinormalisasi kembali.</p><p class="note">${r.sensitivity.filter(s => s.leader_changed).length} dari ${r.sensitivity.length} skenario mengubah peringkat teratas. Perubahan ini diuji pada dataset saat perhitungan disimpan.</p><hr class="rule"><h3>AHP konvensional</h3><p class="note">Urutan pembanding: ${r.ahp_comparison.ranked.map(x => safe(cById(x.candidate_id)?.label || x.candidate_id)).join(' · ')}</p><hr class="rule"><h3>Diagnostik konsistensi</h3>${r.weights.diagnostics.map(x => `<p class="metadata">${safe(x.expert)} · ${safe(levelNames[x.level])}: CR ${num(x.cr * 100, 2)}%</p>`).join('')}</div></div>`;
         return head('04', 'Pemeringkatan kandidat', 'Hasil TOPSIS dihitung di server, dari matriks yang telah diperiksa dan bobot pakar; setiap hasil memiliki snapshot dan tanda perubahan data.', button('run-ranking', 'Jalankan perhitungan', 'primary')) + banner() + output;
     }
@@ -165,34 +175,103 @@
         }
         document.getElementById('observation-form')?.addEventListener('submit', saveObservation);
     }
+    function districtRing() {
+        const f = geography?.features?.find(x => x.properties?.code === '32.11.15');
+        const ring = f?.geometry?.type === 'Polygon' ? f.geometry.coordinates?.[0] : null;
+        return Array.isArray(ring) && ring.length >= 4 ? ring : null;
+    }
+    function insideDistrict(lat, lng) {
+        const pts = districtRing();
+        if (!pts) return false;
+        let inside = false;
+        for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+            const [xi, yi] = pts[i], [xj, yj] = pts[j];
+            if ((yi > lat) !== (yj > lat) && lng < (xj - xi) * (lat - yi) / (yj - yi) + xi) inside = !inside;
+        }
+        return inside;
+    }
+    function renderBoundaryIllustration() {
+        const el = document.getElementById('map-underlay');
+        if (!el) return;
+        const pts = districtRing();
+        if (!pts) { el.innerHTML = '<div class="map-no-geometry"><strong>Batas wilayah tidak tersedia.</strong><span>Coba muat ulang aplikasi; peta tidak menggunakan poligon perkiraan.</span></div>'; return; }
+        const lon = pts.map(c => c[0]), lat = pts.map(c => c[1]);
+        const midX = (Math.min(...lon) + Math.max(...lon)) / 2, midY = (Math.min(...lat) + Math.max(...lat)) / 2;
+        const scale = Math.min(430 / (Math.max(...lon) - Math.min(...lon)), 465 / (Math.max(...lat) - Math.min(...lat)));
+        const xy = ([x,y]) => [545 + (x-midX)*scale, 318 - (y-midY)*scale];
+        const polygon = pts.map((p,i) => (i?'L':'M') + xy(p).map(n=>n.toFixed(1)).join(',')).join(' ')+' Z';
+        const [cx,cy] = xy([midX,midY]);
+        el.innerHTML = `<svg class="district-illustration" viewBox="0 0 1050 650" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Visualisasi batas kecamatan Jatinangor yang disederhanakan; tidak menunjukkan jalan atau koordinat kandidat"><defs><pattern id="carto-grid" width="62" height="62" patternUnits="userSpaceOnUse"><path d="M62 0H0V62" fill="none" stroke="#c6d0cb" stroke-width=".7"/></pattern><pattern id="carto-dots" width="13" height="13" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".75" fill="#abbab2" opacity=".6"/></pattern><filter id="district-shadow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#224c43" flood-opacity=".16"/></filter><clipPath id="district-clip"><path d="${polygon}"/></clipPath></defs><rect width="1050" height="650" fill="#e5eae7"/><rect width="1050" height="650" fill="url(#carto-grid)"/><rect width="1050" height="650" fill="url(#carto-dots)" opacity=".38"/><g opacity=".32" stroke="#becac4" fill="none" stroke-width="1.1"><path d="M-30 180Q150 125 275 220T620 192T1100 150"/><path d="M-35 470Q125 420 300 500T670 490T1100 395"/></g><path d="${polygon}" fill="#d8e8de" stroke="#fff" stroke-width="16" filter="url(#district-shadow)"/><path d="${polygon}" fill="#c9e2d3" stroke="#286951" stroke-width="3.3"/><g clip-path="url(#district-clip)"><rect width="1050" height="650" fill="url(#carto-grid)" opacity=".45"/></g><g transform="translate(${cx.toFixed(1)} ${cy.toFixed(1)})"><circle r="4" fill="#1e6349"/><circle r="13" fill="none" stroke="#2b7458" stroke-opacity=".35"/><text x="0" y="-29" text-anchor="middle" fill="#1b4d3f" font-size="23" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="2">JATINANGOR</text><text x="0" y="35" text-anchor="middle" fill="#466f5d" font-size="12" letter-spacing="1.5">KECAMATAN · 32.11.15</text></g><g fill="#788a81" font-size="11" font-family="ui-monospace,monospace"><text x="32" y="75">${Math.max(...lat).toFixed(3)}°S</text><text x="32" y="612">${Math.min(...lat).toFixed(3)}°S</text><text x="970" y="612">${Math.max(...lon).toFixed(3)}°E</text></g></svg>`;
+    }
+    function focusDistrict() {
+        const ring=districtRing();
+        if (!mapInstance || !ring || !window.L) return;
+        const bounds=window.L.latLngBounds(ring.map(([lon,lat])=>[lat,lon]));
+        mapInstance.fitBounds(bounds.pad(.12),{animate:true,maxZoom:14});
+    }
+    function addDistrictMask() {
+        if (!mapInstance || !window.L || !districtRing()) return;
+        const L=window.L, ring=districtRing().map(([lon,lat])=>[lat,lon]);
+        // Leaflet polygon: the second ring is a hole, preserving full color INSIDE Jatinangor.
+        const outer=[[-20,90],[-20,135],[12,135],[12,90]];
+        boundaryMask=L.polygon([outer,ring],{stroke:false,fillColor:'#8a9793',fillOpacity:mapMasked ? .63 : .13,interactive:false,fillRule:'evenodd',pane:'overlayPane'}).addTo(mapInstance);
+        boundaryLayer=L.polygon(ring,{color:'#1d775d',weight:3.5,opacity:1,fillColor:'#4b9c70',fillOpacity:.085,interactive:false}).addTo(mapInstance);
+        focusDistrict();
+    }
     function initMap() {
-        const target = document.getElementById('map');
-        if (!target)
-            return;
-        if (!window.L) {
-            target.innerHTML = '<div class="map-fallback">Peta membutuhkan koneksi internet untuk memuat Leaflet dan tile OSM.<br>Koordinat tetap dapat diisi melalui Detail lokasi.</div>';
+        const target=document.getElementById('map');
+        if(!target) return;
+        renderBoundaryIllustration();
+        document.getElementById('map-stage')?.classList.toggle('map-bright', !mapMasked);
+        if(!districtRing()) return;
+        if(!window.L) {
+            target.setAttribute('aria-label','Pratinjau vektor batas Jatinangor; Leaflet tidak tersedia.');
+            target.style.pointerEvents='none';
             return;
         }
-        const L = window.L;
-        mapInstance = L.map(target, { scrollWheelZoom: false, zoomControl: true, attributionControl: true }).setView([-6.929, 107.773], 13);
-        const tileTemplate = window.JPO_TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-        L.tileLayer(tileTemplate, { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(mapInstance);
-        const verified = state.candidates.filter(c => c.coordinate_verified && Number.isFinite(c.latitude) && Number.isFinite(c.longitude));
-        const markers = verified.map(c => {
-            const m = L.marker([c.latitude, c.longitude], { icon: L.divIcon({ className: '', html: `<div class="map-pin">${safe(c.id.slice(1))}</div>`, iconSize: [31, 31], iconAnchor: [15, 15] }) }).addTo(mapInstance);
-            m.bindPopup(`<b>${safe(c.id)} · ${safe(c.label)}</b><div style="font-size:12px">Sumber: ${safe(c.coordinate_source)}</div>`);
-            return m;
+        const L=window.L;
+        document.getElementById('map-stage')?.classList.add('leaflet-active');
+        mapInstance=L.map(target,{scrollWheelZoom:false,zoomControl:false,attributionControl:true,preferCanvas:false,minZoom:10}).setView([-6.929,107.774],13);
+        L.control.zoom({position:'bottomright'}).addTo(mapInstance);
+        const url=window.JPO_TILE_URL||'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+        const primaryTiles=L.tileLayer(url,{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors · © <a href="https://carto.com/attribution/" target="_blank">CARTO</a>',crossOrigin:true});
+        let tileErrors=0,tileSuccess=false,switched=false;
+        primaryTiles.on('tileload',()=>{tileSuccess=true;});
+        primaryTiles.on('tileerror',()=>{
+            if(switched||tileSuccess||window.JPO_TILE_URL) return;
+            if(++tileErrors<3) return;
+            switched=true;
+            mapInstance.removeLayer(primaryTiles);
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'}).addTo(mapInstance);
         });
-        if (markers.length >= 2)
-            mapInstance.fitBounds(L.featureGroup(markers).getBounds().pad(.28));
-        else if (markers.length === 1)
-            mapInstance.setView(markers[0].getLatLng(), 15);
-        mapInstance.on('click', e => {
-            // Clicking the map can only create a draft coordinate; it NEVER self-verifies the pin.
-            activePinCandidate = state.candidates.find(c => !c.coordinate_verified)?.id || state.candidates[0]?.id;
-            if (activePinCandidate)
-                openCandidate(activePinCandidate, e.latlng.lat, e.latlng.lng);
+        primaryTiles.addTo(mapInstance);
+        addDistrictMask();
+        const verified=state.candidates.filter(c=>c.coordinate_verified&&Number.isFinite(c.latitude)&&Number.isFinite(c.longitude));
+        verified.forEach(c=>{
+            const marker=L.marker([c.latitude,c.longitude],{icon:L.divIcon({className:'map-marker-wrap',html:`<span class="map-pin" data-label="${safe(c.id)}"></span>`,iconSize:[45,43],iconAnchor:[22,42]})}).addTo(mapInstance);
+            marker.bindPopup(`<div class="map-popup-title">${safe(c.label)}</div><div class="map-popup-source">${safe(c.coordinate_source)}</div>`);
+            marker.on('click',()=>{activePinCandidate=null;});
         });
+        mapInstance.on('click', e=>{
+            if(!activePinCandidate) return;
+            if(!insideDistrict(e.latlng.lat,e.latlng.lng)){
+                toast('Titik berada di luar batas visual Jatinangor. Pilih area di dalam kecamatan, atau verifikasi geometri terlebih dahulu.',true);
+                return;
+            }
+            const candidate=activePinCandidate;activePinCandidate=null;
+            document.getElementById('map-stage')?.classList.remove('map-picking');
+            openCandidate(candidate,e.latlng.lat,e.latlng.lng);
+        });
+    }
+    function openGuide() {
+        const steps=[
+            ['Buat skenario', 'Gunakan seed 202611. Workspace akan diisi 56 nilai dan penilaian pakar berlabel simulasi. Data lama tergantikan.'],
+            ['Baca data dan bobot', 'Buka Data penelitian untuk melihat setiap satuan, lalu Penilaian pakar untuk melihat matriks perbandingan.'],
+            ['Hitung ranking awal', 'Buka Pemeringkatan, klik Jalankan perhitungan. Hasilnya hanya prioritas kajian berdasarkan skenario.'],
+            ['Uji perubahan observasi', 'Pada Observasi, buat catatan agregat simulasi untuk A1, simpan lalu Terapkan. Hasil ranking sebelumnya menjadi tidak mutakhir.'],
+            ['Hitung ulang dan audit', 'Jalankan TOPSIS lagi, bandingkan perubahan dan unduh data di Riwayat & sumber.']
+        ];
+        open(`<div class="guide-eyebrow">PANDUAN PENGUJIAN · 5 LANGKAH</div><h2>Mencoba DSS dari awal sampai selesai</h2><p>Alur ini memeragakan fungsi software tanpa menyatakan bahwa pengukuran Jatinangor telah dilakukan.</p><ol class="guide-list">${steps.map(([title,desc])=>`<li><b>${title}</b><span>${desc}</span></li>`).join('')}</ol><div class="guide-warning">Peta menampilkan batas kecamatan yang disederhanakan. Empat pin kandidat baru muncul setelah koordinatnya diperiksa; tidak ada pin dummy.</div><div class="form-actions guide-actions"><button type="button" class="btn secondary" data-action="close-modal">Tutup</button><button type="button" class="btn primary" data-action="go-demo">Mulai dari skenario uji</button></div>`);
     }
     function open(html) { document.getElementById('modal-content').innerHTML = `<div class="modal-inner">${html}</div>`; modal.showModal(); }
     function close() { modal.close(); }
@@ -200,7 +279,7 @@
         const c = cById(id);
         if (!c)
             return;
-        open(`<h2>${safe(c.id)} · Detail kandidat</h2><p>Koordinat baru tidak otomatis terverifikasi. Pastikan titik dan asalnya sesuai lokasi penyeberangan, bukan sekadar bangunan di sekitarnya.</p><form id="candidate-form" class="grid-form"><input type="hidden" name="candidate_id" value="${safe(id)}"><div class="field wide"><label>Nama titik / ruas</label><input name="label" value="${safe(c.label)}" required minlength="3"></div><div class="field"><label>Lintang</label><input name="latitude" type="number" step="any" min="-90" max="90" value="${latitude ?? c.latitude ?? ''}"></div><div class="field"><label>Bujur</label><input name="longitude" type="number" step="any" min="-180" max="180" value="${longitude ?? c.longitude ?? ''}"></div><div class="field wide"><label>Sumber koordinat</label><input name="coordinate_source" maxlength="500" placeholder="Survei GPS / tautan OpenStreetMap / catatan lapangan" value="${safe(c.coordinate_source || '')}"></div><div class="field wide"><label>Catatan perbedaan lokasi atau nama</label><textarea name="note" maxlength="700">${safe(c.note || '')}</textarea></div><div class="field wide"><label class="check"><input type="checkbox" name="identity_verified" ${c.identity_verified ? 'checked' : ''}> Nama dan definisi titik sudah dikonfirmasi tim</label><label class="check"><input type="checkbox" name="coordinate_verified" ${c.coordinate_verified ? 'checked' : ''}> Saya memeriksa titik ini dan sumber koordinatnya</label></div><div class="field wide form-actions"><button type="button" class="btn secondary" data-action="close-modal">Batal</button><button type="submit" class="btn">Simpan kandidat</button></div></form>`);
+        open(`<h2>${safe(c.id)} · Detail kandidat</h2><p>Koordinat baru tidak otomatis terverifikasi. Pastikan titik dan asalnya sesuai lokasi penyeberangan, bukan sekadar bangunan di sekitarnya.</p><form id="candidate-form" class="grid-form"><input type="hidden" name="candidate_id" value="${safe(id)}"><div class="field wide"><label>Nama titik / ruas</label><input name="label" value="${safe(c.label)}" required minlength="3"></div><div class="field"><label>Lintang</label><input name="latitude" type="number" step="any" min="-90" max="90" value="${latitude ?? c.latitude ?? ''}"></div><div class="field"><label>Bujur</label><input name="longitude" type="number" step="any" min="-180" max="180" value="${longitude ?? c.longitude ?? ''}"></div><div class="field wide"><label>Sumber koordinat</label><input name="coordinate_source" maxlength="500" placeholder="Survei GPS / tautan OpenStreetMap / catatan lapangan" value="${safe(c.coordinate_source || '')}"></div><div class="field wide"><label>Catatan perbedaan lokasi atau nama</label><textarea name="note" maxlength="700">${safe(c.note || '')}</textarea></div><div class="field wide"><label class="check"><input type="checkbox" name="identity_verified" ${c.identity_verified ? 'checked' : ''}> Nama dan definisi titik sudah dikonfirmasi tim</label><label class="check"><input type="checkbox" name="coordinate_verified" ${c.coordinate_verified ? 'checked' : ''}> Saya memeriksa titik ini dan sumber koordinatnya</label></div><div class="field wide form-actions"><button type="button" class="btn secondary" data-action="close-modal">Batal</button><button type="button" class="btn secondary" data-action="start-pick" data-id="${safe(id)}">Pilih titik di peta</button><button type="submit" class="btn">Simpan kandidat</button></div></form>`);
         document.getElementById('candidate-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const x = new FormData(e.currentTarget);
@@ -270,6 +349,25 @@
             selectedCandidate = target.dataset.id;
             render();
         }
+        else if(action === 'go-demo') { close();openDemo(); }
+        else if(action === 'start-pick') {
+            if(!window.L || !districtRing()) { toast('Pemilihan lewat peta memerlukan Leaflet dan geometri kecamatan. Isi koordinat manual setelah verifikasi sumber.',true);return; }
+            const id=target.dataset.id;
+            if(!cById(id)) return;
+            close();screen='overview';activePinCandidate=id;render();
+            document.getElementById('map-stage')?.classList.add('map-picking');
+            toast('Pilih titik penyeberangan di dalam Jatinangor. Hasilnya masih draf sampai sumber koordinat dikonfirmasi.');
+        }
+        else if (action === 'focus-region') {
+            focusDistrict();
+        }
+        else if (action === 'toggle-mask') {
+            mapMasked = !mapMasked;
+            if (boundaryMask) boundaryMask.setStyle({fillOpacity:mapMasked ? .63 : .13});
+            const el=document.getElementById('toggle-mask');
+            if(el){el.textContent=mapMasked?'Area luar: redup':'Area luar: terang';el.setAttribute('aria-pressed',String(mapMasked));}
+            document.getElementById('map-stage')?.classList.toggle('map-bright', !mapMasked);
+        }
         else if (action === 'open-demo')
             openDemo();
         else if (action === 'close-modal')
@@ -293,9 +391,13 @@
     modal.addEventListener('click', event => { if (event.target === modal)
         close(); });
     document.getElementById('export-global').addEventListener('click', download);
+    document.getElementById('help-guide').addEventListener('click', openGuide);
     async function start() {
         try {
-            state = await request('/workspace');
+            const result = await Promise.allSettled([request('/workspace'),request('/geography/jatinangor')]);
+            if(result[0].status !== 'fulfilled') throw result[0].reason;
+            state=result[0].value;
+            geography=result[1].status === 'fulfilled' ? result[1].value : null;
             render();
         }
         catch (err) {

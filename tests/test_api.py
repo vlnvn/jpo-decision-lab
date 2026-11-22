@@ -121,3 +121,17 @@ def test_count_domain_and_period_warning(client):
     client.post('/api/workspace/clear',json={'confirm':'CLEAR_ALL_RESEARCH_DATA'})
     invalid=client.put('/api/measurements',json={'candidate_id':'A1','code':'C1.3','value':1.5,'source':'Uji bilangan bulat','period':'satu jam','checked':True})
     assert invalid.status_code==422
+
+
+def test_admin_geography_is_reproducible_and_not_a_candidate_site(client):
+    r=client.get('/api/geography/jatinangor')
+    assert r.status_code==200
+    body=r.json()
+    feature=body['features'][0]
+    assert feature['properties']['code']=='32.11.15'
+    assert feature['geometry']['type']=='Polygon'
+    ring=feature['geometry']['coordinates'][0]
+    assert len(ring)>=4 and ring[0]==ring[-1]
+    assert body['metadata']['boundary_kind']=='generalized visual administrative boundary'
+    assert 'not legal' in body['metadata']['fitness']
+    assert not any(c['coordinate_verified'] for c in client.get('/api/workspace').json()['candidates'])

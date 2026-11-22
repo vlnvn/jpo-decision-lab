@@ -1,4 +1,4 @@
-# Verification record — 22 November 2026
+# Verification record — 22 November 2026 (revised map workbench)
 
 This record separates local tests from infrastructure and field validation.
 
@@ -21,6 +21,13 @@ This record separates local tests from infrastructure and field validation.
 | Camera, computer vision, speed calibration, pedestrian counts | **Not implemented** | Needs field study and hardware |
 | Multiuser deployment, authentication, API resilience under load | **Not implemented** | Local-only service |
 | Independent reviewer approval of Fuzzy AHP implementation | **Not completed** | Team must approve conventions |
-| GitHub Actions status | **Pending remote confirmation** | Workflow installed in repository |
+| GitHub Actions status | **Awaiting new commit CI** | Workflow installed in repository |
 
 The evaluation container blocks Chromium HTTP navigation. Hence API endpoints were tested via local TestClient and UI rendering was tested with an injected, known API state. This is not equivalent to a full internet-connected end-to-end map integration test.
+
+## Update: Kecamatan boundary and guided user journey
+
+- Boundary endpoint checks a closed Polygon and source code `32.11.15`; there are no embedded candidate pins.
+- Vector fallback and map shade toggle are exercised in Playwright at desktop/mobile widths.
+- `tests/test_journey.py` exercises **real FastAPI/TestClient writes from browser controls** using an in-process bridge: empty state → guided demo → 56 synthetic measurements → ranking → aggregate observation → apply → stale ranking → recompute → audit. No user-facing response is replaced by a fixed canned ranking.
+- Full online Leaflet tile and geocoding behavior remain dependent on a browser with internet access; the test suite does not claim network validation.

@@ -10,7 +10,7 @@ A local research application for comparing **priority for further JPO feasibilit
 - **API:** FastAPI (Python), input validation with Pydantic.
 - **Database:** SQLite, persistent between browser sessions, with WAL journaling.
 - **Decision engine:** Python implementation of hierarchical Fuzzy AHP (Buckley geometric mean), conventional AHP comparison, TOPSIS, and ±10% weight sensitivity.
-- **Map:** Leaflet 1.9.4 with OpenStreetMap tiles for local research. Pins only for coordinates explicitly verified with a source. Map tiles require internet; database and calculations do not.
+- **Map:** Leaflet 1.9.4 with CARTO Positron basemap and a generalized Jatinangor boundary; area outside is muted via a polygon mask. The map falls back to a vector boundary preview without external tiles. Pins only appear after coordinate verification with an explicit source. See [geographic provenance](docs/GEO_SOURCE.md).
 - **Tests:** API, mathematical cases, provenance, simulation isolation, and responsive UI (320–2560 px).
 
 The original four candidates and the 14 definitions from Table II are **research configuration**, not observations. A candidate label/coordinate, 56 measurement values, sources, judgments, observations, and result snapshots are loaded from SQLite. Changing an entry makes the most recent run **stale** until it is recalculated.
@@ -68,7 +68,7 @@ If you previously downloaded the old **single HTML file** rather than cloning th
 5. **Observasi:** manually enter *aggregate counts* after a baseline exists. Apply an observation explicitly, then rerun ranking and compare. No live camera integration is claimed.
 6. **Riwayat & sumber:** download a JSON export of workspace values, run summaries, and provenance. The database persists locally between reloads.
 
-For a live demonstration, use **Buat skenario uji** with a recorded seed (default `202611`), then run TOPSIS. The generator creates a complete **synthetic** example. Every simulated value is tagged as synthetic, including the expert comparisons; they are not results from Jatinangor. A demo replaces the previous workspace, so export genuine work beforehand.
+For a realistic, step-by-step evaluation, use [Panduan uji coba](docs/USER_TEST.md) or click **Panduan uji** in the app header. For a live demonstration, use **Buat skenario uji** with a recorded seed (default `202611`), then run TOPSIS. The generator creates a complete **synthetic** example. Every simulated value is tagged as synthetic, including the expert comparisons; they are not results from Jatinangor. A demo replaces the previous workspace, so export genuine work beforehand.
 
 ## Tests
 
@@ -90,14 +90,14 @@ CI runs the same domain/API tests and browser checks. On a machine where Chromiu
 | `server/mcdm.py` | Numerically tested Fuzzy AHP, AHP, TOPSIS, sensitivity |
 | `server/demo.py` | Deterministic synthetic scenario and its explicit assumptions |
 | `server/app.py` | API endpoints, input gates, snapshot staleness |
-| `web/` | API client, study UI, candidate map |
+| `web/` | API client, study UI, styles, source-attributed GeoJSON, district mask and offline fallback |
 | `tests/` | Unit, API and browser tests |
 | `docs/` | Method decisions, demo provenance, design review, threats and limitations |
 
-Read [method choices](docs/METHOD.md), [synthetic data provenance](docs/SYNTHETIC_DATA.md), [technical architecture](docs/ARCHITECTURE.md), and [design decisions](docs/DESIGN.md) before presenting results.
+Read [user testing steps](docs/USER_TEST.md), [geographic source and map limitations](docs/GEO_SOURCE.md), [method choices](docs/METHOD.md), [synthetic data provenance](docs/SYNTHETIC_DATA.md), [technical architecture](docs/ARCHITECTURE.md), and [design decisions](docs/DESIGN.md) before presenting results.
 
 ## Security and deployment boundary
 
 This version is a **single-workspace local application**, served on `127.0.0.1` by default. It has no authentication, role system, multiuser synchronization, video ingestion, or production-grade deployment hardening. **Do not expose it publicly on a server as-is.** See [SECURITY.md](SECURITY.md).
 
-For the public OSM tile service, follow its [usage policy](https://operations.osmfoundation.org/policies/tiles/). Configure `window.JPO_TILE_URL` or self-host/contract a tile service before significant public traffic. Do not remove attribution. The viewport is approximate context; it does not imply any candidate is located at the viewport center.
+The default basemap is CARTO Positron with OSM+CARTO attribution; a failed CARTO tile request triggers a fallback to the public OSM tile endpoint. Respect both providers' usage terms and limits, including the [OSM tile policy](https://operations.osmfoundation.org/policies/tiles/). Before public deployment, arrange a tile service appropriate for expected traffic. Configure `window.JPO_TILE_URL` if a licensed provider is selected. The generalized district polygon is a *research visualization*, not a legal boundary. The map never infers candidate coordinates from labels.
