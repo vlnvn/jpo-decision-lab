@@ -27,3 +27,5 @@ jobs:
         run: python -m playwright install --with-deps chromium
       - name: Responsive and interaction tests
         run: python -m pytest tests/test_ui.py tests/test_journey.py tests/test_map_stack.py tests/test_map_references.py -q
+      - name: UI alignment and modal interaction regression tests
+        run: python -m pytest tests/test_ui_alignment.py -q

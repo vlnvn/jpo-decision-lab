@@ -94,7 +94,7 @@ CI runs the same domain/API tests and browser checks. On a machine where Chromiu
 | `tests/` | Unit, API and browser tests |
 | `docs/` | Method decisions, demo provenance, design review, threats and limitations |
 
-Read [user testing steps](docs/USER_TEST.md), [geographic source and map limitations](docs/GEO_SOURCE.md), [method choices](docs/METHOD.md), [synthetic data provenance](docs/SYNTHETIC_DATA.md), [technical architecture](docs/ARCHITECTURE.md), and [design decisions](docs/DESIGN.md) before presenting results.
+Read [user testing steps](docs/USER_TEST.md), [interface alignment audit](docs/UI_AUDIT.md), [geographic source and map limitations](docs/GEO_SOURCE.md), [method choices](docs/METHOD.md), [synthetic data provenance](docs/SYNTHETIC_DATA.md), [technical architecture](docs/ARCHITECTURE.md), and [design decisions](docs/DESIGN.md) before presenting results.
 
 ## Security and deployment boundary
 

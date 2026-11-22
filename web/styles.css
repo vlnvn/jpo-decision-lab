@@ -775,25 +775,56 @@ td .button-link {
 .field input:disabled {
   background: #f2f3f1;
 }
-.check {
+.field label.check {
   display: flex;
-  gap: 9px;
+  flex-direction: row;
   align-items: center;
-  color: #475c54;
+  gap: 11px;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+  font-weight: 550;
   font-size: 12px;
+  line-height: 1.48;
+  color: var(--ink);
+  cursor: pointer;
 }
-.check input {
-  accent-color: #286553;
+/* Explicitly reset generic .field input rules for native checkbox controls.
+   These must never inherit width:100% or min-height:43px. */
+.field input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  flex: 0 0 18px;
+  margin: 0;
+  padding: 0;
+  border-radius: 4px;
+  accent-color: #3469e8;
 }
+.field label.check:focus-within { border-color:#3469e8; background:#f2f6ff; }
 .form-actions {
   display: flex;
+  flex-direction: row;
+  align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 20px;
+  margin-top: 18px;
   flex-wrap: wrap;
 }
+/* A form action row can also be a full-width grid item. */
+.field.form-actions {
+  flex-direction: row;
+  align-items: center;
+}
 .modal {
-  width: min(560px,calc(100vw - 24px));
+  width: min(600px,calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 28px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid #c7d4ca;
   padding: 0;
   box-shadow: 0 24px 80px #0e251f35;
@@ -804,7 +835,7 @@ td .button-link {
   background: #0c201ed1;
 }
 .modal-inner {
-  padding: 29px;
+  padding: 28px 30px;
 }
 .modal h2 {
   font-size: 21px;
