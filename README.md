@@ -1,60 +1,103 @@
 # JPO Decision Lab
 
-Ruang kerja analisis untuk memeringkat **prioritas kajian** empat kandidat lokasi jembatan penyeberangan orang (JPO) di Jatinangor. Proyek ini mengimplementasikan rancangan pada makalah kelompok *Model Pendukung Keputusan untuk Memprioritaskan Lokasi Jembatan Penyeberangan Orang di Jatinangor*, khususnya bagian IV–V dan Tabel II.
+A local research application for comparing **priority for further JPO feasibility assessment** in Jatinangor. Based on the team's seven-page manuscript, *Model Pendukung Keputusan untuk Memprioritaskan Lokasi Jembatan Penyeberangan Orang di Jatinangor*, especially Section IV and Table II.
 
-**Status: research prototype.** Perangkat lunak berfungsi secara offline, tetapi belum terhubung ke kamera atau sistem instansi dan belum diuji menggunakan pengukuran Jatinangor. Tidak ada angka lapangan, penilaian pakar, koordinat, atau peringkat yang dibundel sebagai hasil penelitian.
+**Project status: full-stack research prototype, not a traffic engineering product.** The system does not decide whether a pedestrian overpass should be built. No measured pedestrian counts, crashes, expert preferences, or precise crossing coordinates are supplied as field findings.
 
-## Memulai
+## Architecture
 
-**Tanpa instalasi:** buka `JPO_DSS_OFFLINE.html` di browser.
+- **Web UI:** HTML, CSS, JavaScript; API-backed rather than hardcoded arrays of survey values.
+- **API:** FastAPI (Python), input validation with Pydantic.
+- **Database:** SQLite, persistent between browser sessions, with WAL journaling.
+- **Decision engine:** Python implementation of hierarchical Fuzzy AHP (Buckley geometric mean), conventional AHP comparison, TOPSIS, and ±10% weight sensitivity.
+- **Map:** Leaflet 1.9.4 with OpenStreetMap tiles for local research. Pins only for coordinates explicitly verified with a source. Map tiles require internet; database and calculations do not.
+- **Tests:** API, mathematical cases, provenance, simulation isolation, and responsive UI (320–2560 px).
 
-**Pengembangan:** buka `index.html` melalui server statis lokal. Misalnya:
+The original four candidates and the 14 definitions from Table II are **research configuration**, not observations. A candidate label/coordinate, 56 measurement values, sources, judgments, observations, and result snapshots are loaded from SQLite. Changing an entry makes the most recent run **stale** until it is recalculated.
 
-```bash
-python -m http.server 8000
+## Start locally: first checkout (Windows PowerShell)
+
+Prerequisites: **Git**, **Python 3.11+**, modern browser, and internet for initial dependency installation and loading live map tiles. Do not use GitHub Pages: it cannot execute the Python API.
+
+```powershell
+git clone https://github.com/vlnvn/jpo-decision-lab.git
+cd jpo-decision-lab
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m uvicorn server.app:app --host 127.0.0.1 --port 8000
 ```
 
-Lalu akses `http://localhost:8000`. Aplikasi hanya menggunakan HTML, CSS, dan JavaScript; tidak ada CDN atau dependensi runtime.
+Open **http://127.0.0.1:8000/**. Stop the server with `Ctrl+C`.
 
-## Urutan kerja
+If PowerShell blocks the venv activation script, run `.venv\Scripts\python.exe -m pip install -r requirements.txt` and `.venv\Scripts\python.exe -m uvicorn server.app:app --host 127.0.0.1 --port 8000` directly; no execution-policy change is necessary.
 
-1. Konfirmasi identitas A1–A4 dari bukti yang bisa ditelusuri. Nama A4 belum konsisten antara bagian IV.A dan V naskah; sistem meminta penetapan eksplisit.
-2. Isi 56 nilai (empat alternatif × 14 subkriteria) beserta sumber dan periode. Nilai kosong tidak boleh diganti nol.
-3. Masukkan perbandingan berpasangan pakar untuk lima kelompok dan masing-masing subkelompok. Tinjau aturan Fuzzy AHP yang digunakan perangkat lunak sebelum menjalankan pembobotan.
-4. Jalankan TOPSIS untuk mendapatkan urutan prioritas **kajian teknis**, lalu periksa hasil AHP konvensional dan skenario sensitivitas.
-5. Setelah baseline tersedia, masukkan agregat observasi kamera yang telah ditinjau. Sistem memperbarui kriteria dinamis tertentu, menghitung ulang TOPSIS, dan menunjukkan perubahan urutan.
-6. Ekspor JSON dari menu Audit untuk menyimpan pekerjaan. Aplikasi tidak melakukan penyimpanan otomatis ke server; JSON impor hanya memulihkan masukan dan membuang hasil perhitungan dari berkas luar.
-
-## Isi repository
-
-| Berkas | Tujuan |
-|---|---|
-| `index.html`, `styles.css` | Struktur dan sistem visual |
-| `app.js` | Alur penelitian, formulir, provenance, input IoT, ekspor/impor |
-| `engine.js` | Perhitungan Fuzzy AHP, AHP, TOPSIS, sensitivitas |
-| `JPO_DSS_OFFLINE.html` | Distribusi satu berkas tanpa dependensi |
-| `build_offline.py` | Reproduksi distribusi offline |
-| `test_engine.js` | Pengujian komputasi deterministik |
-| `tests/` | Uji alur browser dan responsivitas |
-| `docs/` | Batas riset, keputusan metode, catatan desain, verifikasi |
-| `.github/workflows/ci.yml` | Pemeriksaan dasar pada setiap perubahan kode |
-
-## Membangun dan menguji
+macOS/Linux:
 
 ```bash
-node test_engine.js
-python build_offline.py
+git clone https://github.com/vlnvn/jpo-decision-lab.git
+cd jpo-decision-lab
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m uvicorn server.app:app --host 127.0.0.1 --port 8000
+```
+
+## Existing clone: update instead of cloning again
+
+Open PowerShell inside the existing `jpo-decision-lab` directory:
+
+```powershell
+git status
+git fetch origin
+git pull --ff-only origin main
+python -m pip install -r requirements.txt
+python -m uvicorn server.app:app --host 127.0.0.1 --port 8000
+```
+
+If `git status` shows local edits, commit them to a separate branch or stash them after checking their contents before pulling. Do **not** use `git reset --hard` to solve an update conflict: it destroys uncommitted work. Restart the server after updating. Your database stays in `data/jpo.sqlite3` and is ignored by Git.
+
+If you previously downloaded the old **single HTML file** rather than cloning the repository, clone now. The old file is only a standalone prototype; it has no server-side persistence.
+
+## Research/demo flow
+
+1. **Ikhtisar lokasi:** four paper candidates are seeded without fabricated coordinates. Confirm their labels and map coordinates with a source before showing pins.
+2. **Data penelitian:** edit the 14 measurements per candidate; each requires period, source, and a review checkbox. A missing value is not zero.
+3. **Penilaian pakar:** enter one or more experts' pairwise comparisons at six levels; inconsistent judgments are rejected by the model's implemented CR threshold.
+4. **Pemeringkatan:** run server-side Fuzzy AHP and TOPSIS. Review weights, AHP comparison, and sensitivity.
+5. **Observasi:** manually enter *aggregate counts* after a baseline exists. Apply an observation explicitly, then rerun ranking and compare. No live camera integration is claimed.
+6. **Riwayat & sumber:** download a JSON export of workspace values, run summaries, and provenance. The database persists locally between reloads.
+
+For a live demonstration, use **Buat skenario uji** with a recorded seed (default `202611`), then run TOPSIS. The generator creates a complete **synthetic** example. Every simulated value is tagged as synthetic, including the expert comparisons; they are not results from Jatinangor. A demo replaces the previous workspace, so export genuine work beforehand.
+
+## Tests
+
+```bash
 python -m pip install -r requirements-dev.txt
-python tests/test_ui.py
-python tests/qa_extended.py
+python -m playwright install chromium
+python -m pytest tests -q
+node --check web/app.js
 ```
 
-`requirements-dev.txt` hanya diperlukan untuk pengujian browser, bukan untuk menjalankan aplikasinya. Pengujian browser membutuhkan Chromium; jalur executable dapat diatur melalui variabel `CHROMIUM_PATH`.
+CI runs the same domain/API tests and browser checks. On a machine where Chromium is available as a system executable, the browser tests use it automatically. `CHROMIUM_PATH` overrides the executable path.
 
-## Batas interpretasi
+## Repository layout
 
-TOPSIS tidak menentukan bahwa suatu lokasi berbahaya atau harus dibangun JPO. Jenis fasilitas (JPO, penyeberangan sebidang, atau alternatif lain) dan kesesuaian teknis tetap diputuskan melalui kajian rekayasa lalu lintas. Fuzzy AHP dipilih dari sintesis literatur dalam paper, tetapi implementasi numerik tertentu masih berupa keputusan teknis proyek yang memerlukan persetujuan tim dan pakar. Rinciannya ada di [`docs/DECISIONS.md`](docs/DECISIONS.md).
+| Path | Responsibility |
+| --- | --- |
+| `server/catalog.py` | Paper-derived, versioned criteria and candidate seed definitions |
+| `server/database.py` | SQLite schema, connections, audit history |
+| `server/mcdm.py` | Numerically tested Fuzzy AHP, AHP, TOPSIS, sensitivity |
+| `server/demo.py` | Deterministic synthetic scenario and its explicit assumptions |
+| `server/app.py` | API endpoints, input gates, snapshot staleness |
+| `web/` | API client, study UI, candidate map |
+| `tests/` | Unit, API and browser tests |
+| `docs/` | Method decisions, demo provenance, design review, threats and limitations |
 
-Aplikasi menerima *agregat* jumlah kendaraan dan pejalan kaki, bukan rekaman video mentah. Kecepatan kendaraan baru boleh digunakan bila sumbernya dikalibrasi dan ditinjau. Komponen kamera fisik, autentikasi, database server, dan audit yang tahan manipulasi belum ada.
+Read [method choices](docs/METHOD.md), [synthetic data provenance](docs/SYNTHETIC_DATA.md), [technical architecture](docs/ARCHITECTURE.md), and [design decisions](docs/DESIGN.md) before presenting results.
 
-Dokumentasi teknis: [`SPESIFIKASI.md`](SPESIFIKASI.md) · [`docs/PRODUCT.md`](docs/PRODUCT.md) · [`docs/VALIDATION.md`](docs/VALIDATION.md).
+## Security and deployment boundary
+
+This version is a **single-workspace local application**, served on `127.0.0.1` by default. It has no authentication, role system, multiuser synchronization, video ingestion, or production-grade deployment hardening. **Do not expose it publicly on a server as-is.** See [SECURITY.md](SECURITY.md).
+
+For the public OSM tile service, follow its [usage policy](https://operations.osmfoundation.org/policies/tiles/). Configure `window.JPO_TILE_URL` or self-host/contract a tile service before significant public traffic. Do not remove attribution. The viewport is approximate context; it does not imply any candidate is located at the viewport center.

@@ -1,22 +1,30 @@
-# Interface design notes
+# Interface design audit — research instrument, not SaaS landing page
 
-## Direction
+## Intended user
 
-Antarmuka diperlakukan sebagai meja kerja analisis transportasi. Pembaca perlu melihat **kondisi data terlebih dahulu**, bukan contoh peringkat atau statistik yang tidak ada di paper.
+A research team reviewing why one candidate location ranks above another, and a critical academic supervisor who wants to inspect every number, assumption and source.
 
-Sistem visual memakai warna netral hangat, hijau gelap untuk struktur, dan status yang dinyatakan dalam teks. Tabel, daftar prasyarat, dan matriks kelengkapan lebih berguna dibanding ilustrasi jalan sintetis. Tipografi menggunakan font lokal browser, tanpa mengunduh font atau ikon pihak ketiga.
+## Visual language
 
-## Keputusan antarmuka
+- Dense but legible geographic planning workbench. Map on the left, candidate register on the right; measurement matrix, model inputs and audit have separate sections.
+- Muted mineral green and warm paper as functional palette, with a warm terracotta focus line. No unrelated gradients, glass cards, illustration, glowing AI badges, random hero imagery, or icon tiles above every heading.
+- Segoe UI/Aptos system stack; monospaced compact numerals only for indices, audit times and IDs; numbers tabular where compared.
+- Typography hierarchy follows decision relevance: location -> data completeness -> model -> result, not arbitrary metric decorations.
+- Subtle ruled tables, left-aligned labels, consistent body copy and restrained borders; labels explain data provenance instead of adding generic corporate copy.
+- Status never relies only on hue: synthetic vs user-input and verified vs unverified are rendered as words.
+- High-contrast text, labeled inputs, keyboard focus, skip link, reduced-motion media query, scrollable tables on mobile, and blank states that explain the next action.
 
-- Ringkasan menempatkan matriks 4 × 14 sebagai objek utama. Sel dapat diklik menuju entri data terkait.
-- Komponen untuk kandidat dipisahkan dari tabel kriteria karena jenis informasi dan tugas pengguna berbeda.
-- Hasil komputasi tidak tampak sampai kondisi input dan konsistensi memenuhi persyaratan.
-- Peringatan data hilang dibedakan dari penilaian bahwa suatu lokasi tidak aman.
-- Desktop dirancang secara fluid sampai 1920 px dan diuji juga pada 2560 px. Pada viewport kecil, navigasi dan matriks boleh digeser pada sumbu horizontal di dalam komponennya, bukan pada keseluruhan halaman.
-- Setiap elemen interaktif memiliki fokus keyboard. Animasi dikurangi bila pengguna meminta reduced motion.
+## Map behavior
 
-## Pola yang sengaja dihindari
+Leaflet 1.9.4 with OSM tiles as a research preview. Actual candidate pins require a source-bearing verified coordinate, never reverse-geocoded automatically from an imprecise area name. Clicking the map drafts a coordinate but requires explicit verification. Source attribution remains visible; tile URLs are configurable before public production deployment. No geospatial conclusions from the backdrop alone.
 
-Hero berilustrasi dekoratif, barisan kartu seragam, metrik rekaan, huruf kapital kecil di setiap seksi, gradient text, glow, glassmorphism, emoji sebagai ikon produk, dan promosi yang tidak berkaitan dengan penelitian.
+## Inspiration and methodological references
 
-Sumber rujukan desain: [Impeccable](https://github.com/pbakaus/impeccable) (panduan audit produk, tipografi, layout, UX writing) dan [WCAG 2.2](https://www.w3.org/TR/WCAG22/) (reflow, navigasi keyboard, kejelasan antarmuka). Panduan tersebut memengaruhi proses review; kode desain ditulis khusus untuk proyek ini.
+- Dribbble [web dashboard collection](https://dribbble.com/tags/web-dashboard) was used for visual scanning of layout density, tables and hierarchy, not as a source of licensed screen assets or copy.
+- [Impeccable](https://github.com/pbakaus/impeccable) and [UI/UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) informed a manual critique of generic generated UI conventions. Neither tool's CLI audit has been claimed as executed.
+- [Caveman](https://github.com/JuliusBrussee/caveman) is an agent context/output compression project, **not** a UI design system, clean-code linter, or guarantee of quality. We did not copy its code into the application.
+- [WCAG 2.2](https://www.w3.org/TR/WCAG22/) is an accessibility reference. Full audited WCAG conformance is not claimed.
+
+## Review results and unresolved items
+
+Local browser rendering was checked at widths 320, 390, 768, 1280, 1440, 1920 and 2560 pixels. Horizontal document overflow was not found. The evaluation environment blocks browser navigation to HTTP URLs and remote map tile access. UI rendering was therefore checked with local HTML/CSS/JS and a controlled state fixture, while actual API requests were tested separately using FastAPI TestClient. Real OSM rendering, assistive-technology usability, and user research with transportation planners remain to be tested on an Internet-connected deployment.

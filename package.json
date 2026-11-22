@@ -1,13 +1,1 @@
-{
-  "name": "jpo-decision-lab",
-  "version": "0.2.0",
-  "private": true,
-  "description": "Research prototype for prioritizing pedestrian overpass feasibility studies in Jatinangor",
-  "scripts": {
-    "test": "node test_engine.js",
-    "build": "python build_offline.py"
-  },
-  "engines": {
-    "node": ">=20"
-  }
-}
+{"name":"jpo-decision-lab","version":"2.0.0","private":true,"description":"Evidence-traceable local research decision workbench","scripts":{"test":"python -m pytest tests -q","start":"python -m uvicorn server.app:app --host 127.0.0.1 --port 8000"}}

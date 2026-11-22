@@ -1,7 +1,9 @@
-# Keamanan dan privasi
+# Security boundary
 
-Prototipe berjalan di browser tanpa autentikasi atau server. Data yang diketik berada di memori sesi dan hanya disimpan bila pengguna mengekspor JSON. Hindari memasukkan nama atau rekaman pribadi pejalan kaki ke aplikasi; data kamera semestinya dikonversi menjadi hitungan agregat oleh proses edge yang diuji dan berizin.
+The current server is intended for one trusted local machine (`127.0.0.1:8000`). It is **not** ready for Internet-facing use. No authentication, role permissions, CSRF defense, access control, secure multiuser storage, or durable audit protections exist.
 
-File JSON dari sumber luar diperlakukan sebagai input tak tepercaya: hasil perhitungan yang dikandungnya dibuang lalu harus dihitung ulang. Ini tidak membuktikan keamanan terhadap semua input berbahaya. Untuk kebutuhan lapangan diperlukan pembatasan akses, pengelolaan hak pengguna, retensi media, keamanan perangkat, validasi skema server, dan audit yang tahan manipulasi.
+Never store personally identifiable data, private surveillance footage, identifiable license plates, or secrets in the public repository or in sample data. The API accepts aggregated counts only. SQLite `data/*.sqlite3*` is excluded by `.gitignore`; exported JSON is portable and may contain user-entered observations, so review it before sharing.
 
-Kerentanan pada implementasi yang dipublikasikan sebaiknya dilaporkan ke pemilik repository secara privat, bukan melalui issue publik dengan data sensitif.
+Do not start the server with `--host 0.0.0.0` on a shared or public network. Production work must add authentication and authorization, protected database storage and backups, abuse limits, input size bounds, audit immutability, and a camera privacy review. External map tiles/Leaflet load from the network and must be governed by service terms, browser security policy, and supply-chain review.
+
+For responsible vulnerability reports, create a private communication channel with the maintainer instead of publishing exploit details in a public issue.

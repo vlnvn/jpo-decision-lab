@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#162b30">
+  <meta name="description" content="Sistem pendukung keputusan penelitian lokasi penyeberangan Jatinangor, Fuzzy AHP, TOPSIS, dan observasi lapangan.">
+  <title>JPO Decision Lab · Jatinangor</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23172e32'/%3E%3Cpath d='M10 13h6v22h-6zm11 0h6v22h-6zm11 0h6v22h-6z' fill='%23efede5'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/assets/styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#content">Lewati navigasi</a>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand"><div class="mark" aria-hidden="true"><i></i><i></i><i></i></div><div><strong>JPO <span>Decision Lab</span></strong><small>UNPAD / SMART MOBILITY</small></div></div>
+    <p class="nav-caption">RUANG KERJA</p>
+    <nav id="nav" aria-label="Navigasi utama">
+      <button type="button" class="nav-link active" data-screen="overview"><span class="nav-count">01</span>Ikhtisar lokasi</button>
+      <button type="button" class="nav-link" data-screen="measurements"><span class="nav-count">02</span>Data penelitian</button>
+      <button type="button" class="nav-link" data-screen="weights"><span class="nav-count">03</span>Penilaian pakar</button>
+      <button type="button" class="nav-link" data-screen="ranking"><span class="nav-count">04</span>Pemeringkatan</button>
+      <button type="button" class="nav-link" data-screen="observations"><span class="nav-count">05</span>Observasi</button>
+      <button type="button" class="nav-link" data-screen="audit"><span class="nav-count">06</span>Riwayat & sumber</button>
+    </nav>
+    <div class="sidebar-bottom"><span class="tiny-rail">MODEL</span><b>Fuzzy AHP + TOPSIS</b><p>Prioritas kajian lokasi. Bukan izin pembangunan.</p><span class="rail-version">Research build / 2.0</span></div>
+  </aside>
+  <div class="page">
+    <header class="topbar"><div class="breadcrumbs">Jatinangor <span>/</span> <span id="breadcrumb">Ikhtisar lokasi</span></div><div class="top-actions"><span id="api-status" class="connection">Memeriksa layanan…</span><button type="button" id="export-global" class="text-button" title="Ekspor data dan asal data">Ekspor data <span aria-hidden="true">↗</span></button></div></header>
+    <main id="content" tabindex="-1"><div class="loading">Mengambil data penelitian dari server…</div></main>
+    <footer><span>Laboratorium keputusan mobilitas · Universitas Padjadjaran</span><span>Arsitektur riset, belum untuk keputusan operasional jalan</span></footer>
+  </div>
+</div>
+<div role="status" aria-live="polite" id="flash" class="flash" hidden></div>
+<dialog id="modal" class="modal"><div id="modal-content"></div></dialog>
+</body>
+</html>

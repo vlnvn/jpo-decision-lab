@@ -1,7 +1,14 @@
-# Kontribusi
+# Contributing
 
-Proyek ini berangkat dari satu manuskrip kelompok. Sebelum mengubah data alternatif, nama kriteria, arah benefit/cost, atau alur Fuzzy AHP–TOPSIS–IoT, cocokkan terlebih dahulu dengan bagian dan tabel yang relevan dalam paper. Catat setiap keputusan di `docs/DECISIONS.md`.
+Create a feature branch from `main`; keep commits limited to one testable problem. Explain changes to model behavior, database schema, or criterion definitions separately from visual changes.
 
-Perubahan dibuat pada branch terpisah dan ditinjau melalui pull request. Sertakan alasan perubahan, dampak pada penghitungan, serta hasil `node test_engine.js` dan tes browser untuk fitur yang menyentuh UI. Penambahan indikator atau penilaian lapangan tidak boleh dipresentasikan sebagai isi paper tanpa sumber baru.
+Review before pull request:
 
-Gunakan Conventional Commits singkat, seperti `fix: guard against invalid measurements` atau `feat: add reviewed observation metadata`. Hapus data pribadi, token, dan file video sebelum melakukan commit. Jangan memasukkan nilai sintetis dari test ke distribusi aplikasi.
+1. `python -m pytest tests -q` and `node --check web/app.js` pass.
+2. Research definitions are consistent with Table II; update `docs/METHOD.md` if a methodological convention changes.
+3. New observations have source/period metadata. Do not add 'realistic looking' field values without observation records.
+4. Keep synthetic inputs marked synthetic; never blend simulated and measured data.
+5. Check desktop (1920 px) and mobile (390 px), keyboard input, status labels and map attribution.
+6. Update README/architecture documents when API or setup changes.
+
+Do not commit generated SQLite files, exports with private field data, build caches, or unused asset libraries. CI is configured but is not evidence of production deployment.
