@@ -3,21 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#162b30">
+  <meta name="theme-color" content="#101b30">
   <meta name="description" content="Sistem pendukung keputusan penelitian lokasi penyeberangan Jatinangor, Fuzzy AHP, TOPSIS, dan observasi lapangan.">
   <title>JPO Decision Lab · Jatinangor</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%23172e32'/%3E%3Cpath d='M10 13h6v22h-6zm11 0h6v22h-6zm11 0h6v22h-6z' fill='%23efede5'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="/assets/styles.css">
-  <link rel="stylesheet" href="/assets/workspace.css">
+  <link rel="stylesheet" href="/assets/studio.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.css">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+  <script src="https://unpkg.com/maplibre-gl@5/dist/maplibre-gl.js" defer></script>
+  <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet/leaflet-maplibre-gl.js" defer></script>
   <script src="/assets/app.js" defer></script>
 </head>
 <body>
 <a class="skip" href="#content">Lewati navigasi</a>
 <div class="shell">
   <aside class="sidebar">
-    <div class="brand"><div class="mark" aria-hidden="true"><i></i><i></i><i></i></div><div><strong>JPO <span>Decision Lab</span></strong><small>UNPAD / SMART MOBILITY</small></div></div>
+    <div class="brand"><div class="mark" aria-hidden="true"><i></i><i></i><i></i></div><div><strong>JPO <span>Decision Lab</span></strong><small>URBAN MOBILITY RESEARCH</small></div></div>
     <p class="nav-caption">RUANG KERJA</p>
     <nav id="nav" aria-label="Navigasi utama">
       <button type="button" class="nav-link active" data-screen="overview"><span class="nav-count">01</span>Ikhtisar lokasi</button>
@@ -32,7 +35,7 @@
   <div class="page">
     <header class="topbar"><div class="breadcrumbs">Jatinangor <span>/</span> <span id="breadcrumb">Ikhtisar lokasi</span></div><div class="top-actions"><span id="api-status" class="connection">Memeriksa layanan…</span><button type="button" id="help-guide" class="text-button help-guide">Panduan uji</button><button type="button" id="export-global" class="text-button" title="Ekspor data dan asal data">Ekspor data <span aria-hidden="true">↗</span></button></div></header>
     <main id="content" tabindex="-1"><div class="loading">Mengambil data penelitian dari server…</div></main>
-    <footer><span>Laboratorium keputusan mobilitas · Universitas Padjadjaran</span><span>Arsitektur riset, belum untuk keputusan operasional jalan</span></footer>
+    <footer><span>JPO Decision Lab · Universitas Padjadjaran</span><span>Penilaian prioritas kajian · bukan rekomendasi konstruksi</span></footer>
   </div>
 </div>
 <div role="status" aria-live="polite" id="flash" class="flash" hidden></div>

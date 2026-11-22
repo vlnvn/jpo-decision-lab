@@ -15,14 +15,16 @@ Endpoint `/api/geography/jatinangor` mengembalikan satu poligon GeoJSON yang men
 
 Tampilan tidak boleh menyiratkan bahwa suatu gerbang kampus, jalan, atau titik kandidat sudah diukur. Marker hanya muncul apabila koordinat yang bersumber telah dikonfirmasi. Klik peta untuk memilih titik memberi **draf**, bukan verifikasi otomatis. Mask area hanya memperjelas cakupan penelitian, bukan mengunci kelayakan konstruksi atau aksesibilitas sesungguhnya.
 
-Basemap online default adalah CARTO Positron dengan atribusi [CARTO](https://carto.com/attribution/) dan [OpenStreetMap contributors](https://www.openstreetmap.org/copyright). Jika tile CARTO gagal, aplikasi mencoba tile OpenStreetMap sebagai fallback; hak cipta dan ketentuan masing-masing penyedia tetap berlaku. Tile internet dan kemampuan click-to-pick hanya dapat diuji sepenuhnya pada mesin dengan akses jaringan. Tanpa Leaflet, tersedia fallback vektor geometri versi lokal.
+Basemap online utama sekarang menggunakan **OpenFreeMap Positron** melalui MapLibre GL di dalam Leaflet. OpenFreeMap menyatakan gaya vector tersedia tanpa API key dan menyediakan style `https://tiles.openfreemap.org/styles/positron`; atribusi tetap wajib. Tombol **Jalan** menggunakan raster standar `https://tile.openstreetmap.org/{z}/{x}/{y}.png` dan juga menjadi fallback jika vector tile/WebGL tidak tersedia. Sumbernya adalah OpenStreetMap dan harus mematuhi [Tile Usage Policy](https://operations.osmfoundation.org/policies/tiles/). Tidak ada lagi pemanggilan CARTO anonim yang sebelumnya menghasilkan watermark *API KEY REQUIRED* mulai 2026.
+
+Saat service eksternal atau script CDN tidak tersedia, aplikasi secara eksplisit menampilkan status kegagalan dan SVG batas kecamatan dari GeoJSON yang sama; **tidak menggambar jaringan jalan atau marker fiktif**. Pemuatan tile OpenFreeMap dan OSM nyata belum dapat divalidasi dari runner lokal yang memblokir akses HTTP luar, maka diperlukan pemeriksaan manual di perangkat yang terhubung internet. Kondisi ini tidak mempengaruhi perhitungan DSS melalui FastAPI dan SQLite.
 
 ## Implementasi
 
 - `server/app.py`: endpoint GeoJSON dan pengaturan cache HTTP.
 - `web/app.js`: pengambilan geometri, pratinjau vektor, mask berongga Leaflet, fitting batas, dan batasan validasi pin.
-- `web/workspace.css`: hierarki visual peta, legenda, label sumber, responsive layout, dan fallback tanpa jaringan.
+- `web/studio.css`: hierarki peta, panel inspeksi kandidat, pemilihan basemap, legenda, serta layout responsif. `web/styles.css` memuat kontrol dasar bersama.
 - `tests/test_api.py`: kode wilayah, tipe geometri, penutupan poligon, serta pemisahan geometri dari pin kandidat.
-- `tests/test_ui.py`: render geometri pada desktop/mobile, legenda, mode redup/terang, dan tidak ada pin palsu.
+- `tests/test_ui.py`, `tests/test_map_stack.py`: geometri dan posisi panel pada berbagai resolusi, mask, pemilihan basemap, atribusi dan larangan pin tanpa verifikasi. Tile online tidak diuji oleh fixture.
 
 Peta visual yang tampak baik adalah **hasil desain antarmuka**, bukan validasi akurasi geospasial atau hasil rekayasa lalu lintas.

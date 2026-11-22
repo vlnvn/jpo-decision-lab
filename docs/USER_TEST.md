@@ -6,20 +6,20 @@
 
 Jalankan server sesuai README, lalu buka `http://127.0.0.1:8000`. Pastikan indikator koneksi di bar atas menunjukkan server lokal tersambung. Klik **Panduan uji** jika ingin melihat ringkasan langkah tanpa meninggalkan aplikasi.
 
-Hati-hati: **Buat skenario uji** mengganti isi workspace, sedangkan **Reset workspace** mengosongkannya. Unduh JSON dari **Riwayat & sumber** dahulu bila ada pekerjaan yang ingin dipertahankan.
+Hati-hati: **Mulai simulasi** mengganti isi workspace, sedangkan **Kosongkan data** mengosongkannya. Unduh JSON dari **Riwayat & sumber** dahulu bila ada pekerjaan yang ingin dipertahankan.
 
 ## Uji satu: peta dan kondisi awal
 
 1. Buka **Ikhtisar lokasi**. Peta menonjolkan wilayah Kecamatan Jatinangor; bagian luar terlihat abu-abu ketika peta online berfungsi. Pratinjau vektor batas tetap muncul jika jaringan tidak tersedia.
-2. Tekan **Area luar: redup**. Label berubah menjadi **Area luar: terang**. Tekan lagi untuk mengembalikan fokus.
-3. Tekan **Fokus wilayah**. Pada peta online, kamera kembali ke batas kecamatan. Pada pratinjau offline, tampilan tetap berada pada batas kecamatan.
+2. Tekan **Redupkan luar**. Label berubah menjadi **Tampilkan luar**. Tekan lagi untuk mengembalikan fokus.
+3. Pilih **Minimal** untuk OpenFreeMap Positron dan **Jalan** untuk OpenStreetMap raster, jika koneksi internet tersedia. Jika peta tidak muncul, periksa status dan pastikan tidak ada watermark API key. Setelah itu tekan **Fokus wilayah**. Pada peta online, kamera kembali ke batas kecamatan. Pada pratinjau offline, tampilan tetap berada pada batas kecamatan.
 4. Periksa daftar A1–A4. Tidak adanya marker bukan bug: paper menyebut area kandidat, bukan titik koordinat crossing yang terkonfirmasi. Klik panah di samping kandidat untuk membuka detail; jangan centang verifikasi tanpa pemeriksaan.
 
 **Hasil yang diharapkan:** batas wilayah tetap terlihat; 0/4 koordinat terverifikasi pada workspace baru; tidak muncul pin buatan.
 
 ## Uji dua: simulasi lengkap
 
-1. Klik **Buat skenario uji**. Isi seed `202611` dan tekan **Buat dataset sintetis**.
+1. Klik **Mulai simulasi**. Isi seed `202611` dan tekan **Buat dataset sintetis**.
 2. Status berubah menjadi **SIMULASI**, dan kelengkapan pengukuran menjadi **56/56**. Seed sama menghasilkan data yang sama.
 3. Buka **Data penelitian**. Pilih A1, lalu A2. Periksa kode, satuan, *benefit/cost*, sumber, dan periode tiap nilai. Nilai ini terkunci pada mode demo; untuk memasukkan data asli harus mengosongkan workspace terlebih dahulu.
 4. Buka **Penilaian pakar**. Periksa enam tingkat matriks perbandingan. Penilaian yang tampil merupakan fixture sintetis, bukan hasil wawancara.
@@ -50,7 +50,7 @@ Hati-hati: **Buat skenario uji** mengganti isi workspace, sedangkan **Reset work
 
 ## Uji empat: alur data lapangan (tanpa dummy)
 
-1. Unduh JSON apabila perlu, kemudian **Reset workspace**.
+1. Unduh JSON apabila perlu, kemudian **Kosongkan data**.
 2. Verifikasi identitas keempat kandidat, terutama A4 yang namanya berbeda dalam paper.
 3. Periksa titik penyeberangan langsung di lapangan atau pada sumber geospasial yang dapat dipertanggungjawabkan. Masukkan koordinat dan sumber, baru tandai verifikasi. Batas polygon pada peta adalah referensi yang **disederhanakan**, bukan bukti bahwa konstruksi layak.
 4. Untuk setiap kandidat, isi 14 pengukuran beserta satuan, sumber, periode observasi, dan tinjauan mutu.
@@ -60,7 +60,7 @@ Hati-hati: **Buat skenario uji** mengganti isi workspace, sedangkan **Reset work
 
 ## Jika ada masalah
 
-- **Tidak ada peta jalan:** sambungan tile internet/Leaflet belum tersedia. Batas kecamatan versi vektor tetap dapat dipelajari. Perhitungan DSS tidak bergantung pada tile internet.
+- **Tidak ada peta jalan:** akses CDN, OpenFreeMap, OSM, WebGL atau jaringan perangkat mungkin belum tersedia. Batas kecamatan versi vektor tetap dapat dipelajari. Perhitungan DSS tidak bergantung pada tile internet.
 - **Tidak bisa menjalankan TOPSIS:** periksa 56 nilai yang sudah ditinjau, matriks pakar, konsistensi, dan identitas kandidat (mode input pengguna).
 - **Nilai baru tidak mengubah peringkat:** itu mungkin. Bandingkan koefisien sebelum/sesudah dan cek apakah input benar-benar berbeda; jangan memaksakan pergantian peringkat.
 - **Satu observasi tidak bisa diterapkan ulang:** memang ditolak untuk mencegah pembaruan ganda.

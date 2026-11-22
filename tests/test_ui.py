@@ -12,7 +12,7 @@ import pytest
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script[^>]*>.*?</script>','',re.sub(r'<link[^>]+rel="stylesheet"[^>]*>','',(ROOT/'web/index.html').read_text()),flags=re.S)
-CSS=(ROOT/'web/styles.css').read_text()+(ROOT/'web/workspace.css').read_text()+(ROOT/'web/workspace.css').read_text()
+CSS=(ROOT/'web/styles.css').read_text()+(ROOT/'web/studio.css').read_text()
 GEO=json.loads((ROOT/'web/data/jatinangor.geojson').read_text(encoding='utf-8'))
 JS=(ROOT/'web/app.js').read_text()
 
@@ -29,9 +29,9 @@ def test_viewport(width,height,client):
         page.add_script_tag(content=JS)
         page.wait_for_selector('h1')
         assert not page.evaluate('document.documentElement.scrollWidth>innerWidth')
-        assert page.get_by_role('heading',name='Jatinangor, dalam satu peta.').count()==1
+        assert page.get_by_role('heading',name='Kajian lokasi JPO Jatinangor').count()==1
         assert page.locator('.district-illustration').count()==1
-        assert page.locator('.map-floating-caption').get_by_text('Kecamatan Jatinangor').count()==1
+        assert page.locator('.map-floating-caption strong').inner_text() == 'Jatinangor'
         if width==1920:
             page.get_by_role('button',name='Data penelitian').click()
             assert page.get_by_text('Riwayat kecelakaan pedestrian').count()==1
@@ -53,10 +53,10 @@ def test_map_focus_and_boundary_dont_invent_pins(client):
         page.locator('.district-illustration').wait_for()
         assert '107.803' in page.locator('.district-illustration').get_attribute('aria-label') or page.locator('.district-illustration').count()==1
         assert page.locator('.map-pin').count()==0
-        assert page.get_by_text('Batas wilayah disederhanakan').count()==1
-        button=page.get_by_role('button',name='Area luar: redup')
+        assert page.get_by_text('Batas visual disederhanakan').count()==1
+        button=page.get_by_role('button',name='Redupkan luar')
         button.click()
         assert page.locator('#map-stage').evaluate('(e)=>e.classList.contains("map-bright")')
-        page.get_by_role('button',name='Buat skenario uji').click()
+        page.get_by_role('button',name='Mulai simulasi').click()
         assert page.get_by_role('heading',name='Skenario demonstrasi').count()==1
         browser.close()

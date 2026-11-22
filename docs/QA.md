@@ -21,7 +21,7 @@ This record separates local tests from infrastructure and field validation.
 | Camera, computer vision, speed calibration, pedestrian counts | **Not implemented** | Needs field study and hardware |
 | Multiuser deployment, authentication, API resilience under load | **Not implemented** | Local-only service |
 | Independent reviewer approval of Fuzzy AHP implementation | **Not completed** | Team must approve conventions |
-| GitHub Actions status | **Awaiting new commit CI** | Workflow installed in repository |
+| GitHub Actions status | **Rerun after each commit; verify the GitHub Actions result** | Workflow installed in repository |
 
 The evaluation container blocks Chromium HTTP navigation. Hence API endpoints were tested via local TestClient and UI rendering was tested with an injected, known API state. This is not equivalent to a full internet-connected end-to-end map integration test.
 
@@ -30,4 +30,10 @@ The evaluation container blocks Chromium HTTP navigation. Hence API endpoints we
 - Boundary endpoint checks a closed Polygon and source code `32.11.15`; there are no embedded candidate pins.
 - Vector fallback and map shade toggle are exercised in Playwright at desktop/mobile widths.
 - `tests/test_journey.py` exercises **real FastAPI/TestClient writes from browser controls** using an in-process bridge: empty state → guided demo → 56 synthetic measurements → ranking → aggregate observation → apply → stale ranking → recompute → audit. No user-facing response is replaced by a fixed canned ranking.
-- Full online Leaflet tile and geocoding behavior remain dependent on a browser with internet access; the test suite does not claim network validation.
+- Full online Leaflet / MapLibre / external basemap behavior remain dependent on a browser with internet access; the test suite does not claim network validation.
+
+## New map interaction contract
+
+`tests/test_map_stack.py` verifies that the app no longer requests anonymous CARTO tiles, that the primary vector URL uses OpenFreeMap, and that an OSM raster switch is available. A deterministic fake Leaflet adapter tests layer creation, attribution, camera fitting, style switching and the absence of unverified pins; it does **not** reproduce actual external map tiles. A separate manual test on a normal network is still necessary.
+
+The old `web/workspace.css` stylesheet has been retired. Shared elements are in `web/styles.css`; the study-specific map and inspector are in `web/studio.css`. Browser tests check 320, 390, 768, 1280, 1440, 1920 and 2560 px for document overflow.

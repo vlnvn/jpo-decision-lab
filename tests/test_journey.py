@@ -11,7 +11,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script[^>]*>.*?</script>','',re.sub(r'<link[^>]+rel="stylesheet"[^>]*>','',(ROOT/'web/index.html').read_text(encoding='utf-8')),flags=re.S)
-CSS=(ROOT/'web/styles.css').read_text(encoding='utf-8')+(ROOT/'web/workspace.css').read_text(encoding='utf-8')
+CSS=(ROOT/'web/styles.css').read_text(encoding='utf-8')+(ROOT/'web/studio.css').read_text(encoding='utf-8')
 JS=(ROOT/'web/app.js').read_text(encoding='utf-8')
 
 

@@ -16,6 +16,10 @@
     let boundaryMask = null;
     let boundaryLayer = null;
     let mapMasked = true;
+    let mapStyle = 'vector';
+    let activeBasemap = null;
+    let vectorAttribution = false;
+    let mapLoadTimer = null;
     const levelNames = { main: 'Lima kelompok kriteria', local0: 'Keselamatan', local1: 'Kebutuhan pejalan kaki', local2: 'Aksesibilitas', local3: 'Kelayakan teknis', local4: 'Ekonomi' };
     const levelSizes = { main: 5, local0: 4, local1: 2, local2: 2, local3: 3, local4: 3 };
     const NF = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 });
@@ -78,18 +82,28 @@
     }
     function recentRun() { return state.runs[0] || null; }
     function registerRows() {
-        return state.candidates.map((c, i) => `<div class="register-row"><span class="location-code">${safe(c.id)}</span><div class="location-details"><p class="location-name">${safe(c.label)}</p><p class="location-meta">${c.coordinate_verified ? 'Koordinat tervalidasi oleh tim' : 'Titik penyeberangan belum ditetapkan'}${c.identity_verified ? ' · Identitas diperiksa' : ''}</p></div><button type="button" class="location-action" aria-label="Lihat detail ${safe(c.label)}" data-action="edit-candidate" data-id="${safe(c.id)}">↗</button></div>`).join('');
+        return state.candidates.map(c => {
+            const confirmed = Boolean(c.coordinate_verified && Number.isFinite(c.latitude) && Number.isFinite(c.longitude));
+            const selected = c.id === selectedCandidate;
+            const status = confirmed ? 'Titik terverifikasi' : c.identity_verified ? 'Identitas diperiksa · titik belum tersedia' : 'Perlu verifikasi titik';
+            return `<div class="register-row${selected ? ' selected' : ''}" data-candidate-row="${safe(c.id)}"><button type="button" class="candidate-select" data-action="inspect-candidate" data-id="${safe(c.id)}" aria-label="Pilih kandidat ${safe(c.label)}"><span class="location-code">${safe(c.id)}</span><span class="location-details"><span class="location-name">${safe(c.label)}</span><span class="location-meta"><i class="candidate-state${confirmed ? ' confirmed' : ''}"></i>${status}</span></span></button><button type="button" class="location-action" data-action="edit-candidate" data-id="${safe(c.id)}" aria-label="Sunting ${safe(c.label)}" title="Sunting data kandidat">↗</button></div>`;
+        }).join('');
     }
     function workflow() {
         const steps = [['measurements', '01', 'Lengkapi data', '4 lokasi × 14 indikator'], ['weights', '02', 'Bobot pakar', 'Perbandingan Fuzzy AHP'], ['ranking', '03', 'Prioritas kajian', 'Hasil TOPSIS'], ['observations', '04', 'Validasi lapangan', 'Agregat observasi'], ['audit', '05', 'Jejak keputusan', 'Data & perhitungan']];
         return `<div class="workflow-heading"><div><span class="section-overline">ALUR PENGGUNA</span><h2>Dari pengukuran menuju keputusan yang bisa ditelusuri</h2></div><span class="workflow-source">Berdasarkan Bagian IV–V paper kelompok</span></div><div class="workflow-steps">${steps.map(([id, code, title, detail], i) => `<button type="button" class="workflow-step" data-screen="${id}"><span class="step-num">${code}</span><span><b>${title}</b><small>${detail}</small></span><span aria-hidden="true" class="step-arrow">↗</span></button>`).join('')}</div>`;
     }
     function overview() {
-        const actions = button('open-demo', 'Buat skenario uji', 'primary') + button('clear', 'Reset workspace', 'ghost');
-        return `<div class="overview-head">${head('STUDI KAWASAN', 'Jatinangor, dalam satu peta.', 'Tentukan lokasi yang perlu dikaji lebih dulu dengan data terukur, bobot pakar, dan pemeringkatan yang dapat dijelaskan.', actions)}</div>` + banner() +
-            `<div class="map-layout"><section class="map-surface" aria-labelledby="map-heading"><div class="map-topline"><div><div class="section-overline">WILAYAH STUDI / 32.11.15</div><h2 id="map-heading">Kecamatan Jatinangor</h2></div><div class="map-controls"><span class="map-live-dot" aria-hidden="true"></span><span class="map-source-type">Batas wilayah disederhanakan</span><button type="button" class="map-control" data-action="toggle-mask" id="toggle-mask" aria-pressed="${mapMasked}">Area luar: ${mapMasked ? 'redup' : 'terang'}</button><button type="button" class="map-control solid" data-action="focus-region">Fokus wilayah ↗</button></div></div><div class="map-stage" id="map-stage"><div class="map-underlay" id="map-underlay" aria-hidden="true"></div><div id="map" class="map" aria-label="Peta interaktif Kecamatan Jatinangor; klik lokasi hanya saat mode pemilihan titik diaktifkan"></div><div class="map-floating-caption"><span class="map-caption-label">CAKUPAN STUDI</span><strong>Kecamatan Jatinangor</strong><span>Kabupaten Sumedang · Jawa Barat</span><div class="map-caption-rule"></div><span>Area luar diarsir agar fokus tetap pada wilayah penelitian.</span></div><div class="map-legend"><span><i class="legend-swatch in"></i> Dalam kecamatan</span><span><i class="legend-swatch out"></i> Di luar cakupan</span></div><div class="map-north" aria-hidden="true">N <span>↑</span></div></div><div class="map-footnote"><span><strong>Geometri:</strong> cahyadsn, versi disederhanakan · bukan batas legal atau lokasi survei</span><span>Basemap: © OpenStreetMap · © CARTO (saat tersedia)</span></div></section>
-            <aside class="candidate-surface"><div class="candidate-head"><span class="section-overline">ALTERNATIF PENELITIAN</span><h2>Empat lokasi awal</h2><p>Daftar kandidat dari paper; titik koordinat baru ditampilkan apabila sudah diperiksa.</p></div><div class="candidate-list">${registerRows()}</div><div class="candidate-bottom"><div class="candidate-progress-head"><span>Persiapan koordinat</span><b>${state.readiness.coordinates_verified} dari ${state.candidates.length}</b></div><div class="candidate-progress"><i style="width:${state.candidates.length ? (100 * state.readiness.coordinates_verified / state.candidates.length) : 0}%"></i></div><p>${state.readiness.coordinates_verified ? 'Hanya titik dengan sumber koordinat yang muncul pada peta.' : 'Peta wilayah tetap tersedia tanpa memasang pin yang belum terbukti.'}</p><div class="candidate-warning">Nama kandidat A4 berbeda antara Bagian IV.A dan kesimpulan. Perlu konfirmasi sebelum survei.</div></div></aside></div>
-            <div class="overview-metrics">${metrics()}</div>${workflow()}`;
+        const actions = button('open-demo','Mulai simulasi','primary') + button('clear','Kosongkan data','ghost');
+        const count = state.readiness;
+        return `<section class="studio-intro"><div class="studio-intro-copy"><div class="kicker">STUDI KAWASAN <span class="kicker-separator">/</span> 32.11.15</div><h1>Kajian lokasi JPO Jatinangor</h1><p>Empat kandidat, empat belas indikator, dan satu proses keputusan yang dapat diperiksa kembali.</p></div><div class="head-actions">${actions}</div></section>` +
+            banner() +
+            `<div class="study-strip" aria-label="Kondisi data penelitian"><div class="strip-cell"><span>CAKUPAN</span><strong>1 kecamatan</strong><small>Kabupaten Sumedang</small></div><div class="strip-cell"><span>KANDIDAT</span><strong>${state.candidates.length} lokasi</strong><small>Ditentukan dalam paper</small></div><div class="strip-cell"><span>DATA TERPERIKSA</span><strong>${count.measured} <em>/ ${count.expected}</em></strong><small>Empat lokasi × 14 kriteria</small></div><div class="strip-cell"><span>KOORDINAT</span><strong>${count.coordinates_verified} <em>/ ${state.candidates.length}</em></strong><small>Titik penyeberangan tervalidasi</small></div></div>` +
+            `<section class="studio-map" aria-labelledby="map-heading"><div class="map-topline"><div class="map-title"><span class="section-overline">01 / PETA KAWASAN</span><h2 id="map-heading">Kecamatan Jatinangor <span class="map-region-code">32.11.15</span></h2><p>Batas administratif sebagai konteks awal. Pin hanya muncul untuk titik yang sumbernya sudah diperiksa.</p></div><div class="map-controls"><div class="layer-toggle" role="group" aria-label="Gaya peta"><button type="button" data-action="map-style" data-style="vector" aria-pressed="${mapStyle==='vector'}">Minimal</button><button type="button" data-action="map-style" data-style="streets" aria-pressed="${mapStyle==='streets'}">Jalan</button></div><button type="button" class="map-control" data-action="toggle-mask" id="toggle-mask" aria-pressed="${mapMasked}">${mapMasked ? 'Redupkan luar' : 'Tampilkan luar'}</button><button type="button" class="map-control focus" data-action="focus-region">Fokus wilayah <span aria-hidden="true">⌖</span></button></div></div>
+            <div class="map-body"><div class="map-stage" id="map-stage"><div class="map-underlay" id="map-underlay" aria-hidden="true"></div><div id="map" class="map" aria-label="Peta interaktif Kecamatan Jatinangor; klik lokasi hanya ketika mode pemilihan titik aktif"></div><div class="map-north" aria-hidden="true">N <span>↑</span></div><div class="map-legend"><span><i class="legend-swatch in"></i> Jatinangor</span><span><i class="legend-swatch out"></i> Di luar studi</span></div><div class="map-floating-caption"><span class="map-caption-label">WILAYAH STUDI</span><strong>Jatinangor</strong><span>Sumedang · Jawa Barat</span><span class="map-caption-note">Batas visual disederhanakan</span></div><div class="basemap-status" id="basemap-status" role="status">Menghubungkan peta jalan…</div></div>
+            <aside class="candidate-surface" aria-label="Panel kandidat lokasi"><div class="candidate-head"><div class="inspector-kicker">INSPEKSI LOKASI <span>${state.candidates.length} ALTERNATIF</span></div><h2>Kandidat penyeberangan</h2><p>Pilih lokasi untuk memeriksa data dan sumber koordinatnya.</p></div><div class="candidate-list">${registerRows()}</div><div class="candidate-bottom"><div class="candidate-progress-head"><span>Titik terverifikasi</span><b>${count.coordinates_verified} / ${state.candidates.length}</b></div><div class="candidate-progress" role="progressbar" aria-valuemin="0" aria-valuemax="${state.candidates.length}" aria-valuenow="${count.coordinates_verified}"><i style="width:${state.candidates.length ? (100 * count.coordinates_verified / state.candidates.length) : 0}%"></i></div><p>Koordinat kandidat belum otomatis ditentukan oleh nama area.</p><div class="candidate-warning"><strong>Perlu konfirmasi</strong><span>Identitas A4 berbeda antara Bagian IV dan kesimpulan paper.</span></div></div></aside></div>
+            <div class="map-footnote"><span><strong>SUMBER GEOMETRI</strong> cahyadsn / batas disederhanakan — bukan acuan legal atau survei</span><span>Basemap: OpenFreeMap / OpenStreetMap · © kontributor OSM</span></div></section>
+            ${workflow()}`;
     }
     function measurements() {
         const cand = cById(selectedCandidate) || state.candidates[0];
@@ -160,6 +174,9 @@
             }
             catch { }
             mapInstance = null;
+            activeBasemap = null;
+            vectorAttribution = false;
+            if(mapLoadTimer){clearTimeout(mapLoadTimer);mapLoadTimer=null;}
         }
         document.getElementById('breadcrumb').textContent = TITLES[screen];
         document.querySelectorAll('[data-screen]').forEach(el => el.classList.toggle('active', el.dataset.screen === screen));
@@ -191,66 +208,131 @@
         return inside;
     }
     function renderBoundaryIllustration() {
-        const el = document.getElementById('map-underlay');
-        if (!el) return;
-        const pts = districtRing();
-        if (!pts) { el.innerHTML = '<div class="map-no-geometry"><strong>Batas wilayah tidak tersedia.</strong><span>Coba muat ulang aplikasi; peta tidak menggunakan poligon perkiraan.</span></div>'; return; }
-        const lon = pts.map(c => c[0]), lat = pts.map(c => c[1]);
-        const midX = (Math.min(...lon) + Math.max(...lon)) / 2, midY = (Math.min(...lat) + Math.max(...lat)) / 2;
-        const scale = Math.min(430 / (Math.max(...lon) - Math.min(...lon)), 465 / (Math.max(...lat) - Math.min(...lat)));
-        const xy = ([x,y]) => [545 + (x-midX)*scale, 318 - (y-midY)*scale];
-        const polygon = pts.map((p,i) => (i?'L':'M') + xy(p).map(n=>n.toFixed(1)).join(',')).join(' ')+' Z';
-        const [cx,cy] = xy([midX,midY]);
-        el.innerHTML = `<svg class="district-illustration" viewBox="0 0 1050 650" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Visualisasi batas kecamatan Jatinangor yang disederhanakan; tidak menunjukkan jalan atau koordinat kandidat"><defs><pattern id="carto-grid" width="62" height="62" patternUnits="userSpaceOnUse"><path d="M62 0H0V62" fill="none" stroke="#c6d0cb" stroke-width=".7"/></pattern><pattern id="carto-dots" width="13" height="13" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".75" fill="#abbab2" opacity=".6"/></pattern><filter id="district-shadow" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#224c43" flood-opacity=".16"/></filter><clipPath id="district-clip"><path d="${polygon}"/></clipPath></defs><rect width="1050" height="650" fill="#e5eae7"/><rect width="1050" height="650" fill="url(#carto-grid)"/><rect width="1050" height="650" fill="url(#carto-dots)" opacity=".38"/><g opacity=".32" stroke="#becac4" fill="none" stroke-width="1.1"><path d="M-30 180Q150 125 275 220T620 192T1100 150"/><path d="M-35 470Q125 420 300 500T670 490T1100 395"/></g><path d="${polygon}" fill="#d8e8de" stroke="#fff" stroke-width="16" filter="url(#district-shadow)"/><path d="${polygon}" fill="#c9e2d3" stroke="#286951" stroke-width="3.3"/><g clip-path="url(#district-clip)"><rect width="1050" height="650" fill="url(#carto-grid)" opacity=".45"/></g><g transform="translate(${cx.toFixed(1)} ${cy.toFixed(1)})"><circle r="4" fill="#1e6349"/><circle r="13" fill="none" stroke="#2b7458" stroke-opacity=".35"/><text x="0" y="-29" text-anchor="middle" fill="#1b4d3f" font-size="23" font-family="Segoe UI,sans-serif" font-weight="700" letter-spacing="2">JATINANGOR</text><text x="0" y="35" text-anchor="middle" fill="#466f5d" font-size="12" letter-spacing="1.5">KECAMATAN · 32.11.15</text></g><g fill="#788a81" font-size="11" font-family="ui-monospace,monospace"><text x="32" y="75">${Math.max(...lat).toFixed(3)}°S</text><text x="32" y="612">${Math.min(...lat).toFixed(3)}°S</text><text x="970" y="612">${Math.max(...lon).toFixed(3)}°E</text></g></svg>`;
+        const el=document.getElementById('map-underlay');
+        if(!el)return;
+        const pts=districtRing();
+        if(!pts){
+            el.innerHTML='<div class="map-no-geometry"><strong>Batas wilayah tidak tersedia.</strong><span>Peta tidak menggambar batas perkiraan.</span></div>';
+            return;
+        }
+        // Geometry is transformed exclusively from the sourced GeoJSON; no road lines or POIs are invented.
+        const width=Math.max(280,el.clientWidth||1050),height=Math.max(280,el.clientHeight||650);
+        const isWide=window.innerWidth>1020;
+        const availableWidth=isWide?Math.max(300,width-390):width;
+        const xs=pts.map(v=>v[0]),ys=pts.map(v=>v[1]);
+        const minLon=Math.min(...xs),maxLon=Math.max(...xs),minLat=Math.min(...ys),maxLat=Math.max(...ys);
+        const midX=(minLon+maxLon)/2,midY=(minLat+maxLat)/2;
+        const scale=Math.min((availableWidth*.69)/(maxLon-minLon),(height*.76)/(maxLat-minLat));
+        const centerX=isWide?availableWidth*.51:width*.5,centerY=height*.54;
+        const project=([x,y])=>[centerX+(x-midX)*scale,centerY-(y-midY)*scale];
+        const path=pts.map((pt,index)=>(index?'L':'M')+project(pt).map(v=>v.toFixed(2)).join(' ')).join(' ')+' Z';
+        const gridSize=52;
+        el.innerHTML=`<svg class="district-illustration" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Batas wilayah Kecamatan Jatinangor (disederhanakan), berdasarkan geometri GeoJSON. Tidak ada jalan atau pin lokasi dalam pratinjau offline.">
+            <defs><pattern id="geo-grid" width="${gridSize}" height="${gridSize}" patternUnits="userSpaceOnUse"><path d="M ${gridSize} 0 L 0 0 0 ${gridSize}" fill="none" stroke="#cdd6e4" stroke-opacity=".7" stroke-width=".7" /></pattern></defs>
+            <rect width="${width}" height="${height}" fill="#e8edf5"/><rect width="${width}" height="${height}" fill="url(#geo-grid)"/>
+            <path d="${path}" fill="#d8e6fb" stroke="#fff" stroke-width="12" stroke-linejoin="round"/>
+            <path d="${path}" fill="none" stroke="#356adb" stroke-width="3.6" stroke-linejoin="round"/>
+            <g font-family="Segoe UI,Arial,sans-serif" text-anchor="middle" transform="translate(${centerX.toFixed(2)} ${centerY.toFixed(2)})">
+                <circle r="17" fill="#356adb" fill-opacity=".11"/><circle r="5" fill="#356adb"/>
+                <text y="-39" fill="#25467c" font-size="${isWide?20:15}" font-weight="750" letter-spacing="1.5">JATINANGOR</text>
+                <text y="37" fill="#5576ab" font-size="${isWide?11:9}" letter-spacing="1.1">KECAMATAN 32.11.15</text>
+            </g>
+            <g fill="#91a0b4" font-family="Consolas,monospace" font-size="10"><text x="20" y="${height-22}">${minLon.toFixed(3)}°E</text><text x="${width-20}" y="${height-22}" text-anchor="end">${maxLon.toFixed(3)}°E</text></g>
+        </svg>`;
     }
     function focusDistrict() {
         const ring=districtRing();
         if (!mapInstance || !ring || !window.L) return;
         const bounds=window.L.latLngBounds(ring.map(([lon,lat])=>[lat,lon]));
-        mapInstance.fitBounds(bounds.pad(.12),{animate:true,maxZoom:14});
+        const isDesktop=window.innerWidth>=1080;
+        mapInstance.fitBounds(bounds.pad(.12),{animate:true,maxZoom:14,paddingTopLeft:isDesktop?[40,32]:[22,24],paddingBottomRight:isDesktop?[390,32]:[22,24]});
     }
     function addDistrictMask() {
         if (!mapInstance || !window.L || !districtRing()) return;
         const L=window.L, ring=districtRing().map(([lon,lat])=>[lat,lon]);
         // Leaflet polygon: the second ring is a hole, preserving full color INSIDE Jatinangor.
         const outer=[[-20,90],[-20,135],[12,135],[12,90]];
-        boundaryMask=L.polygon([outer,ring],{stroke:false,fillColor:'#8a9793',fillOpacity:mapMasked ? .63 : .13,interactive:false,fillRule:'evenodd',pane:'overlayPane'}).addTo(mapInstance);
-        boundaryLayer=L.polygon(ring,{color:'#1d775d',weight:3.5,opacity:1,fillColor:'#4b9c70',fillOpacity:.085,interactive:false}).addTo(mapInstance);
+        boundaryMask=L.polygon([outer,ring],{stroke:false,fillColor:'#566577',fillOpacity:mapMasked ? .43 : .08,interactive:false,fillRule:'evenodd',pane:'overlayPane'}).addTo(mapInstance);
+        L.polyline(ring,{color:'#ffffff',weight:8,opacity:.98,interactive:false}).addTo(mapInstance);
+        boundaryLayer=L.polygon(ring,{color:'#275bdf',weight:3,opacity:1,fillColor:'#4b7be5',fillOpacity:.09,interactive:false}).addTo(mapInstance);
         focusDistrict();
+    }
+    function basemapStatus(message, level = '') {
+        const el=document.getElementById('basemap-status');
+        if (el) { el.textContent=message;el.dataset.level=level; }
+    }
+    function activateBasemap() {
+        const stage=document.getElementById('map-stage');
+        if(stage)stage.classList.add('has-basemap');
+        basemapStatus('Peta jalan tersambung', 'online');
+    }
+    function addBasemap() {
+        if(!mapInstance || !window.L)return;
+        const L=window.L;
+        const useVector=mapStyle==='vector' && typeof L.maplibreGL==='function';
+        if(mapLoadTimer){clearTimeout(mapLoadTimer);mapLoadTimer=null;}
+        if(activeBasemap){try{mapInstance.removeLayer(activeBasemap);}catch{}activeBasemap=null;}
+        if(vectorAttribution){mapInstance.attributionControl.removeAttribution('&copy; OpenFreeMap / OpenMapTiles / OpenStreetMap contributors');vectorAttribution=false;}
+        document.getElementById('map-stage')?.classList.remove('has-basemap');
+        basemapStatus('Memuat detail jalan…');
+        if(useVector){
+            let loaded=false;
+            try{
+                const vector=L.maplibreGL({style:'https://tiles.openfreemap.org/styles/positron'});
+                activeBasemap=vector.addTo(mapInstance);
+                mapInstance.attributionControl.addAttribution('&copy; OpenFreeMap / OpenMapTiles / OpenStreetMap contributors');
+                vectorAttribution=true;
+                const gl=vector.getMaplibreMap();
+                if(gl){
+                    gl.on('load',()=>{if(activeBasemap===vector){loaded=true;activateBasemap();}});
+                    gl.on('error',()=>{if(activeBasemap===vector&&!loaded)fallbackToStreets('Layanan peta minimal tidak tersedia. Menggunakan peta jalan.');});
+                }
+                mapLoadTimer=setTimeout(()=>{if(activeBasemap===vector&&!loaded)fallbackToStreets('Peta minimal lambat merespons. Beralih ke peta jalan.');},9000);
+            }catch(e){fallbackToStreets('Peta minimal tidak dapat dijalankan. Menggunakan peta jalan.');}
+        }else{
+            fallbackToStreets(mapStyle==='vector' ? 'Mode minimal memerlukan WebGL. Menggunakan peta jalan.' : 'Memuat peta jalan OpenStreetMap.');
+        }
+    }
+    function fallbackToStreets(reason) {
+        if(!mapInstance || !window.L)return;
+        if(mapLoadTimer){clearTimeout(mapLoadTimer);mapLoadTimer=null;}
+        if(activeBasemap){try{mapInstance.removeLayer(activeBasemap);}catch{}activeBasemap=null;}
+        if(vectorAttribution){mapInstance.attributionControl.removeAttribution('&copy; OpenFreeMap / OpenMapTiles / OpenStreetMap contributors');vectorAttribution=false;}
+        basemapStatus(reason);
+        const L=window.L;
+        const raster=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+            maxZoom:19,crossOrigin:true,
+            attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap contributors</a>'
+        });
+        activeBasemap=raster;
+        let total=0,errors=0,loaded=false;
+        raster.on('tileload',()=>{if(activeBasemap===raster&&!loaded){loaded=true;activateBasemap();}});
+        raster.on('tileerror',()=>{if(activeBasemap!==raster||loaded)return;errors++;if(errors>=3)basemapStatus('Peta jalan tidak dapat dimuat. Tersedia pratinjau batas wilayah.', 'offline');});
+        raster.addTo(mapInstance);
+        mapLoadTimer=setTimeout(()=>{if(activeBasemap===raster&&!loaded)basemapStatus('Peta jalan belum tersambung. Periksa koneksi internet.', 'offline');},8000);
     }
     function initMap() {
         const target=document.getElementById('map');
         if(!target) return;
         renderBoundaryIllustration();
         document.getElementById('map-stage')?.classList.toggle('map-bright', !mapMasked);
-        if(!districtRing()) return;
+        if(!districtRing()) {basemapStatus('Geometri wilayah tidak tersedia.', 'offline');return;}
         if(!window.L) {
-            target.setAttribute('aria-label','Pratinjau vektor batas Jatinangor; Leaflet tidak tersedia.');
+            target.setAttribute('aria-label','Pratinjau batas wilayah; layanan peta jalan tidak tersedia.');
             target.style.pointerEvents='none';
+            basemapStatus('Peta jalan membutuhkan koneksi internet; batas kecamatan tetap tersedia.', 'offline');
             return;
         }
         const L=window.L;
-        document.getElementById('map-stage')?.classList.add('leaflet-active');
         mapInstance=L.map(target,{scrollWheelZoom:false,zoomControl:false,attributionControl:true,preferCanvas:false,minZoom:10}).setView([-6.929,107.774],13);
-        L.control.zoom({position:'bottomright'}).addTo(mapInstance);
-        const url=window.JPO_TILE_URL||'https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-        const primaryTiles=L.tileLayer(url,{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors · © <a href="https://carto.com/attribution/" target="_blank">CARTO</a>',crossOrigin:true});
-        let tileErrors=0,tileSuccess=false,switched=false;
-        primaryTiles.on('tileload',()=>{tileSuccess=true;});
-        primaryTiles.on('tileerror',()=>{
-            if(switched||tileSuccess||window.JPO_TILE_URL) return;
-            if(++tileErrors<3) return;
-            switched=true;
-            mapInstance.removeLayer(primaryTiles);
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'}).addTo(mapInstance);
-        });
-        primaryTiles.addTo(mapInstance);
+        L.control.zoom({position:'bottomleft'}).addTo(mapInstance);
+        addBasemap();
         addDistrictMask();
         const verified=state.candidates.filter(c=>c.coordinate_verified&&Number.isFinite(c.latitude)&&Number.isFinite(c.longitude));
         verified.forEach(c=>{
             const marker=L.marker([c.latitude,c.longitude],{icon:L.divIcon({className:'map-marker-wrap',html:`<span class="map-pin" data-label="${safe(c.id)}"></span>`,iconSize:[45,43],iconAnchor:[22,42]})}).addTo(mapInstance);
             marker.bindPopup(`<div class="map-popup-title">${safe(c.label)}</div><div class="map-popup-source">${safe(c.coordinate_source)}</div>`);
-            marker.on('click',()=>{activePinCandidate=null;});
+            marker.on('click',()=>{activePinCandidate=null;selectedCandidate=c.id;});
         });
         mapInstance.on('click', e=>{
             if(!activePinCandidate) return;
@@ -358,14 +440,27 @@
             document.getElementById('map-stage')?.classList.add('map-picking');
             toast('Pilih titik penyeberangan di dalam Jatinangor. Hasilnya masih draf sampai sumber koordinat dikonfirmasi.');
         }
+        else if (action === 'inspect-candidate') {
+            const c=cById(target.dataset.id);
+            if(!c)return;
+            selectedCandidate=c.id;
+            document.querySelectorAll('[data-candidate-row]').forEach(el=>el.classList.toggle('selected',el.dataset.candidateRow===c.id));
+            if(mapInstance&&c.coordinate_verified&&Number.isFinite(c.latitude)&&Number.isFinite(c.longitude))mapInstance.flyTo([c.latitude,c.longitude],Math.max(mapInstance.getZoom(),15),{duration:0.7});
+            else toast('Titik kandidat belum terverifikasi. Gunakan tombol sunting untuk mencatat sumber koordinat.');
+        }
+        else if (action === 'map-style') {
+            mapStyle=target.dataset.style==='streets'?'streets':'vector';
+            document.querySelectorAll('[data-action="map-style"]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.style===mapStyle)));
+            addBasemap();
+        }
         else if (action === 'focus-region') {
             focusDistrict();
         }
         else if (action === 'toggle-mask') {
             mapMasked = !mapMasked;
-            if (boundaryMask) boundaryMask.setStyle({fillOpacity:mapMasked ? .63 : .13});
+            if (boundaryMask) boundaryMask.setStyle({fillOpacity:mapMasked ? .43 : .08});
             const el=document.getElementById('toggle-mask');
-            if(el){el.textContent=mapMasked?'Area luar: redup':'Area luar: terang';el.setAttribute('aria-pressed',String(mapMasked));}
+            if(el){el.textContent=mapMasked?'Redupkan luar':'Tampilkan luar';el.setAttribute('aria-pressed',String(mapMasked));}
             document.getElementById('map-stage')?.classList.toggle('map-bright', !mapMasked);
         }
         else if (action === 'open-demo')
