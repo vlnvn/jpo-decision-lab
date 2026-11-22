@@ -60,7 +60,10 @@ def test_real_user_path_with_synthetic_data(client):
         assert client.get('/api/workspace').json()['runs'][0]['stale']
         page.get_by_role('button',name='Pemeringkatan').click()
         assert page.get_by_text('Hasil tidak mutakhir').count()>0
+        assert page.locator('.stale-note').count()==1
+        assert page.locator('.ranking-lead.is-stale').count()==1
         page.get_by_role('button',name='Jalankan perhitungan').click()
+        assert page.locator('.stale-note').count()==0
         assert not client.get('/api/workspace').json()['runs'][0]['stale']
         page.get_by_role('button',name='Riwayat & sumber').click()
         assert page.get_by_text('Aktivitas penelitian').count()>0

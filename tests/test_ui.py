@@ -53,7 +53,7 @@ def test_map_focus_and_boundary_dont_invent_pins(client):
         page.locator('.district-illustration').wait_for()
         assert '107.803' in page.locator('.district-illustration').get_attribute('aria-label') or page.locator('.district-illustration').count()==1
         assert page.locator('.map-pin').count()==0
-        assert page.get_by_text('Batas visual disederhanakan').count()==1
+        assert page.get_by_text('Batas untuk visualisasi').count()==1
         button=page.get_by_role('button',name='Redupkan luar')
         button.click()
         assert page.locator('#map-stage').evaluate('(e)=>e.classList.contains("map-bright")')

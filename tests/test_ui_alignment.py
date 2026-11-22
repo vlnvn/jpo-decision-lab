@@ -80,21 +80,17 @@ def test_candidate_modal_geometry_and_functionality(width,height,client,shared_b
 
 
 @pytest.mark.parametrize('width,height',[(320,750),(390,844),(573,900),(800,950),(1440,950),(1920,1080)])
-def test_all_screens_have_valid_header_footer_and_no_document_overflow(width,height,client,shared_browser):
+def test_all_screens_have_clear_context_and_no_document_overflow(width,height,client,shared_browser):
     state=client.get('/api/workspace').json()
     page=browser_page(shared_browser,width,height,state)
-    assert page.locator('.breadcrumbs').inner_text().startswith('Studi Jatinangor')
-    assert page.get_by_text('JPO Decision Lab · Prototipe penelitian',exact=True).count()==1
+    assert page.locator('.workspace-context').inner_text() == 'Jatinangor\nKabupaten Sumedang'
+    assert page.locator('.page footer').count() == 0
     for screen in ['overview','measurements','weights','ranking','observations','audit']:
         page.locator(f'.sidebar nav [data-screen="{screen}"]').click()
         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'),(width,screen)
-        assert page.locator('.breadcrumbs').inner_text().strip().endswith(page.locator('#breadcrumb').inner_text())
-        assert page.locator('#breadcrumb').inner_text().strip()
-        # Footer must remain inside the content column, and both pieces must be readable.
-        assert page.locator('.page footer span').count()==2
-        boxes=page.locator('.page footer span').evaluate_all('(els)=>els.map(e=>{let r=e.getBoundingClientRect();return {x:r.x,w:r.width,y:r.y,h:r.height}})')
-        assert all(0<=r['x'] and r['x']+r['w']<=width+1 for r in boxes),(width,screen,boxes)
-        assert not any('Universitas Padjadjaran' in e for e in page.locator('.page footer span').all_inner_texts())
+        assert 'JPO Decision Lab' in page.title()
+        assert page.locator('.workspace-context').is_visible()
+        assert 'Universitas Padjadjaran' not in page.locator('body').inner_text()
         if screen=='measurements' and width<=600:
             assert page.locator('.data-table tbody tr').count()==14
             assert page.locator('.data-table tbody tr [data-action="edit-measurement"]').count()==14

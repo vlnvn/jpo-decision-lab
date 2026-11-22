@@ -198,14 +198,6 @@ a:hover {
   gap: 15px;
   padding: 0 clamp(24px,3vw,67px);
 }
-.breadcrumbs {
-  font-size: 12px;
-  color: #586a68;
-}
-.breadcrumbs span:first-child {
-  padding: 0 10px;
-  color: #9aa9a3;
-}
 .top-actions {
   display: flex;
   align-items: center;
@@ -244,27 +236,9 @@ main {
   flex: 1;
   min-width: 0;
 }
-.page footer {
-  padding: 18px clamp(24px,3vw,67px);
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  border-top: 1px solid var(--line);
-  font-size: 11px;
-  color: #7b8783;
-}
 .loading {
   padding: 70px 0;
   color: var(--muted);
-}
-.kicker {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #536c64;
-  font: 11px var(--mono);
-  letter-spacing: .045em;
-  margin-bottom: 15px;
 }
 .kicker:before {
   content: '';
@@ -632,8 +606,8 @@ td .button-link {
   text-underline-offset: 3px;
 }
 .source-cell {
-  font-size: 11px;
-  color: #77837b;
+  font-size: 12px;
+  color: #5b697d;
   max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1078,11 +1052,7 @@ td .button-link {
   .ref-list {
     grid-template-columns: 1fr;
   }
-  .page footer {
-    padding: 18px;
-    flex-direction: column;
-  }
-  .topbar .connection {
+    .topbar .connection {
     font-size: 11px;
   }
 }
@@ -1112,13 +1082,7 @@ td .button-link {
     grid-column: 2;
     justify-self: start;
   }
-  .topbar .breadcrumbs {
-    max-width: 150px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .section-heading {
+  .topbar   .section-heading {
     align-items: flex-start;
     flex-direction: column;
   }
