@@ -5,7 +5,7 @@
 - Seven-page *scoping review* with ten selected studies and a proposed conceptual DSS for Jatinangor.
 - Four **initial** candidate areas, five criterion groups and 14 subcriteria, as defined in Table II.
 - Fuzzy AHP to elicit weights, TOPSIS to rank candidate sites by the **priority of further study**, and IoT-based observations after the first ranking.
-- A4 has inconsistent naming: Section IV.A says **GKPN/IPDN**, conclusion says **Pertigaan Hegarmanah/IPDN**. The prototype retains this uncertainty rather than silently placing a pin.
+- A4 has inconsistent naming: Section IV.A says **GKPN/IPDN**, conclusion says **Pertigaan Hegarmanah/IPDN**. The prototype retains this uncertainty; its A4 map marker is a sourced *IPDN-area landmark*, not a claimed JPO crossing location.
 - No field measurements, expert panel judgments, validated camera model, location-specific construction estimate, or demonstrated traffic outcome is reported.
 
 ## Implemented mathematical choices (not uniquely specified by paper)

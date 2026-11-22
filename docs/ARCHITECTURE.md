@@ -25,7 +25,7 @@ SQLite files are written to `data/jpo.sqlite3` by default, never committed to Gi
 | --- | --- | --- |
 | GET | `/api/health` | Readiness |
 | GET | `/api/workspace` | Load complete workspace from SQLite |
-| GET | `/api/geography/jatinangor` | Versioned, generalized reference boundary; no candidate pin data |
+| GET | `/api/geography/jatinangor` | Versioned HDX/BPS 2020 outline plus four sourced landmark reference pins; no verified crossing data |
 | POST | `/api/workspace/demo` | Destructively create deterministic synthetic study |
 | POST | `/api/workspace/clear` | Destructively clear measurements/judgments/runs |
 | PUT | `/api/candidates/{id}` | Update a study candidate / verified coordinate |
@@ -49,7 +49,7 @@ OpenAPI schema: `http://127.0.0.1:8000/api/docs` after starting the server.
 6. A speed observation updates C1.2 only if its `calibrated` flag is true.
 7. Synthetic and field values cannot be mixed; clear workspace before switching to real data.
 8. Every saved ranking fingerprint includes candidate/criteria values and judgments. Source edits mark previous runs stale.
-9. Candidate pins only show independently confirmed coordinates with source text. The Jatinangor polygon is source-attributed, geometrically simplified contextual reference, separate from the SQLite-backed candidate coordinates. See `docs/GEO_SOURCE.md`.
+9. Four contextual landmark pins show sourced area references but never count as verified crossings; crossing pins require independently confirmed coordinates with source text. The Jatinangor polygon is source-attributed, geometrically simplified contextual reference, separate from the SQLite-backed candidate coordinates. See `docs/GEO_SOURCE.md`.
 
 ## Future production requirements
 

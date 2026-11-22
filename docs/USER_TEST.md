@@ -13,15 +13,15 @@ Hati-hati: **Mulai simulasi** mengganti isi workspace, sedangkan **Kosongkan dat
 1. Buka **Ikhtisar lokasi**. Peta menonjolkan wilayah Kecamatan Jatinangor; bagian luar terlihat abu-abu ketika peta online berfungsi. Pratinjau vektor batas tetap muncul jika jaringan tidak tersedia.
 2. Tekan **Redupkan luar**. Label berubah menjadi **Tampilkan luar**. Tekan lagi untuk mengembalikan fokus.
 3. Pilih **Minimal** untuk OpenFreeMap Positron dan **Jalan** untuk OpenStreetMap raster, jika koneksi internet tersedia. Jika peta tidak muncul, periksa status dan pastikan tidak ada watermark API key. Setelah itu tekan **Fokus wilayah**. Pada peta online, kamera kembali ke batas kecamatan. Pada pratinjau offline, tampilan tetap berada pada batas kecamatan.
-4. Periksa daftar A1–A4. Tidak adanya marker bukan bug: paper menyebut area kandidat, bukan titik koordinat crossing yang terkonfirmasi. Klik panah di samping kandidat untuk membuka detail; jangan centang verifikasi tanpa pemeriksaan.
+4. Periksa empat pin referensi beserta daftar A1–A4. Empat marker A1–A4 adalah titik referensi landmark bersumber, **bukan titik crossing**. Pilih marker untuk melihat sumber koordinatnya, kemudian buka detail kandidat jika akan memasukkan lokasi JPO hasil survei. Jangan centang verifikasi tanpa pemeriksaan.
 
-**Hasil yang diharapkan:** batas wilayah tetap terlihat; 0/4 koordinat terverifikasi pada workspace baru; tidak muncul pin buatan.
+**Hasil yang diharapkan:** batas wilayah tetap terlihat; 0/4 koordinat terverifikasi pada workspace baru; empat marker landmark muncul tetapi **tidak dihitung** sebagai titik JPO terverifikasi.
 
 ## Uji dua: simulasi lengkap
 
 1. Klik **Mulai simulasi**. Isi seed `202611` dan tekan **Buat dataset sintetis**.
 2. Status berubah menjadi **SIMULASI**, dan kelengkapan pengukuran menjadi **56/56**. Seed sama menghasilkan data yang sama.
-3. Buka **Data penelitian**. Pilih A1, lalu A2. Periksa kode, satuan, *benefit/cost*, sumber, dan periode tiap nilai. Nilai ini terkunci pada mode demo; untuk memasukkan data asli harus mengosongkan workspace terlebih dahulu.
+3. Klik **Unduh CSV pengukuran** dan cocokkan 56 baris dengan `examples/synthetic_demo_seed_202611.csv`. Kemudian buka **Data penelitian**. Pilih A1, lalu A2. Periksa kode, satuan, *benefit/cost*, sumber, dan periode tiap nilai. Nilai ini terkunci pada mode demo; untuk memasukkan data asli harus mengosongkan workspace terlebih dahulu.
 4. Buka **Penilaian pakar**. Periksa enam tingkat matriks perbandingan. Penilaian yang tampil merupakan fixture sintetis, bukan hasil wawancara.
 5. Buka **Pemeringkatan** dan klik **Jalankan perhitungan**.
 
